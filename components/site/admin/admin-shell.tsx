@@ -1,0 +1,175 @@
+﻿"use client"
+
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { ChevronRight, Compass, Home, LogOut, PanelLeftClose, ShieldCheck, Sparkles } from "lucide-react"
+import { useMemo, useState } from "react"
+
+import { useAuth } from "@/components/providers/auth-provider"
+import {
+  adminMenuGroups,
+  adminRoleLabels,
+  canAccessAdminSection,
+  getAdminMenuItem,
+  isAdminPathActive,
+} from "@/components/site/admin/admin-config"
+import { cn } from "@/lib/utils"
+
+export function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const { primaryRole, initialized, profile, user, signOut } = useAuth()
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const visibleGroups = adminMenuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccessAdminSection(primaryRole, item.allowedRoles)),
+    }))
+    .filter((group) => group.items.length > 0)
+
+  const currentItem = useMemo(() => {
+    return visibleGroups.flatMap((group) => group.items).find((item) => isAdminPathActive(pathname, item.href)) || getAdminMenuItem("overview")
+  }, [pathname, visibleGroups])
+
+  const initials = useMemo(() => {
+    const source = profile?.full_name || user?.email || "AD"
+    return source
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("")
+  }, [profile?.full_name, user?.email])
+
+  const onSignOut = async () => {
+    if (isSigningOut) {
+      return
+    }
+
+    setIsSigningOut(true)
+    try {
+      await signOut()
+      router.replace("/")
+      router.refresh()
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-5 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-lg font-black text-white shadow-lg shadow-blue-600/20">
+              {profile?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar_url} alt={profile.full_name || "Admin"} className="h-full w-full rounded-2xl object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="truncate font-heading text-xl font-black tracking-tight text-slate-950">Admin</div>
+              <div className="truncate text-sm text-slate-500">{initialized ? adminRoleLabels[primaryRole] : "Đang đồng bộ vai trò"}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-3 py-5">
+          <nav className="space-y-2">
+            {visibleGroups.flatMap((group) => group.items).map((item) => {
+              const active = isAdminPathActive(pathname, item.href)
+              const Icon = item.icon
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[15px] font-semibold transition",
+                    active
+                      ? "bg-blue-50 text-primary shadow-[0_10px_24px_rgba(0,80,203,0.10)]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  )}
+                >
+                  <span className={cn("flex size-9 items-center justify-center rounded-xl", active ? "bg-primary text-white" : "bg-slate-100 text-slate-500") }>
+                    <Icon className="size-4.5" />
+                  </span>
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+
+        <div className="border-t border-slate-200 px-4 py-4">
+          <button
+            type="button"
+            onClick={onSignOut}
+            disabled={isSigningOut}
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+              <LogOut className="size-4.5" />
+            </span>
+            <span>{isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="pl-[280px]">
+        <header className="sticky top-0 z-30 flex min-h-[78px] items-center justify-between border-b border-slate-200 bg-white/92 px-8 backdrop-blur-xl">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <span>Quản trị</span>
+              <ChevronRight className="size-4" />
+              <span className="font-semibold text-slate-950">{currentItem?.label || "Dashboard"}</span>
+            </div>
+            <div className="mt-1 text-sm text-slate-500">{currentItem?.description || "Khu vận hành nội bộ của The Horizon"}</div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 lg:flex">
+              <Sparkles className="size-4 text-amber-500" />
+              Public site đã khóa cho role quản trị
+            </div>
+            <div className="hidden items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-primary md:flex">
+              <ShieldCheck className="size-4" />
+              {adminRoleLabels[primaryRole]}
+            </div>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <Home className="size-4" />
+              Trang quản trị
+            </Link>
+          </div>
+        </header>
+
+        <main className="px-8 py-8">
+          <div className="mb-6 flex items-center justify-between rounded-[1.7rem] border border-slate-200 bg-white px-5 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                <Compass className="size-5" />
+              </div>
+              <div>
+                <div className="font-heading text-lg font-black tracking-tight text-slate-950">The Horizon Admin Console</div>
+                <div className="text-sm text-slate-500">Sidebar trái cố định, tất cả menu hiển thị trực quan như app quản lý nội bộ.</div>
+              </div>
+            </div>
+            <div className="hidden items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm font-medium text-slate-500 xl:flex">
+              <PanelLeftClose className="size-4" />
+              Menu luôn hiển thị
+            </div>
+          </div>
+
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}
+
