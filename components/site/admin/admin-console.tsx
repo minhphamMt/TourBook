@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
@@ -11,6 +11,7 @@ import {
   Shield,
   ShieldAlert,
   Ticket,
+  UserRound,
   Users,
 } from "lucide-react"
 
@@ -25,6 +26,7 @@ import {
 } from "@/components/site/admin/admin-config"
 import { StatusPill } from "@/components/site/status-pill"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { canMarkBookingPaid, canResolveCancellationRequest, countsAsRecognizedSpend } from "@/lib/booking-logic"
 import { getAllowedStaffTicketTransitions, getSupportStatusDescription } from "@/lib/customer-care-logic"
 import { formatCurrency, formatDateTime, normalizeSearch, statusLabel } from "@/lib/format"
@@ -100,13 +102,10 @@ type SystemCounts = {
 function AdminPageHeader({
   eyebrow,
   title,
-  description,
-  primaryRole,
   rightSlot,
 }: {
   eyebrow: string
   title: string
-  description: string
   primaryRole: keyof typeof adminRoleLabels
   rightSlot?: ReactNode
 }) {
@@ -115,11 +114,8 @@ function AdminPageHeader({
       <div>
         <div className="eyebrow">{eyebrow}</div>
         <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{title}</h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-500 sm:text-lg">{description}</p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <div className="rounded-full border border-blue-100 bg-blue-50/90 px-5 py-3 text-sm font-semibold text-primary">Vai trò: {adminRoleLabels[primaryRole]}</div>
-        <div className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600">Sidebar trái đã tách module theo từng nghiệp vụ</div>
         {rightSlot}
       </div>
     </div>
@@ -196,7 +192,7 @@ function AdminDeniedState({ title, description }: { title: string; description: 
 }
 
 export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
-  const { initialized, session, user, isManagement, primaryRole } = useAuth()
+  const { initialized, session, user, profile, isManagement, primaryRole, refreshProfile } = useAuth()
   const supabase = getSupabaseBrowserClient()
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<string | null>(null)
@@ -988,12 +984,73 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
     </div>
   )
 
+  const renderProfile = () => {
+    const profileFormKey = `${profile?.id || "anon"}-${profile?.full_name || ""}-${profile?.phone || ""}-${profile?.address || ""}-${profile?.avatar_url || ""}`
+
+    const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      const formData = new FormData(event.currentTarget)
+
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: authenticatedJsonHeaders,
+        body: JSON.stringify({
+          fullName: formData.get("fullName"),
+          phone: formData.get("phone"),
+          address: formData.get("address"),
+          avatarUrl: formData.get("avatarUrl"),
+        }),
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        setStatus(result.error || "Không thể cập nhật profile.")
+        return
+      }
+
+      await refreshProfile()
+      setStatus("Đã cập nhật profile thành công.")
+    }
+
+    return (
+      <section className="surface-panel p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <UserRound className="size-5 text-sky-600" />
+          <div className="text-2xl font-black tracking-tight text-slate-950">Thông tin cá nhân</div>
+        </div>
+
+        <form key={profileFormKey} onSubmit={handleProfileSubmit} className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-slate-700">Họ và tên</span>
+              <Input name="fullName" defaultValue={profile?.full_name || ""} className="h-12 rounded-2xl bg-slate-100/80" />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-slate-700">Điện thoại</span>
+              <Input name="phone" defaultValue={profile?.phone || ""} className="h-12 rounded-2xl bg-slate-100/80" />
+            </label>
+            <label className="space-y-2 md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Địa chỉ</span>
+              <Input name="address" defaultValue={profile?.address || ""} className="h-12 rounded-2xl bg-slate-100/80" />
+            </label>
+            <label className="space-y-2 md:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Avatar URL</span>
+              <Input name="avatarUrl" defaultValue={profile?.avatar_url || ""} className="h-12 rounded-2xl bg-slate-100/80" />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <Button className="rounded-full bg-sky-600 text-white hover:bg-sky-700">Lưu thông tin quản trị</Button>
+          </div>
+        </form>
+      </section>
+    )
+  }
+
   return (
     <div>
       <AdminPageHeader
         eyebrow={meta.eyebrow}
         title={meta.title}
-        description={meta.description}
         primaryRole={primaryRole}
         rightSlot={
           section !== "overview" ? (
@@ -1020,6 +1077,7 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
           {section === "tours" ? renderTours() : null}
           {section === "activity" ? renderActivity() : null}
           {section === "system" ? renderSystem() : null}
+          {section === "profile" ? renderProfile() : null}
         </>
       ) : (
         <AdminLoadingState />

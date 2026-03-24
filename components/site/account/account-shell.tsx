@@ -2,38 +2,24 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { ChevronRight, Home, LogOut } from "lucide-react"
+import { Home, LogOut, UserRound } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { useAuth } from "@/components/providers/auth-provider"
 import {
-  adminMenuGroups,
-  adminRoleLabels,
-  canAccessAdminSection,
-  getAdminMenuItem,
-  isAdminPathActive,
-} from "@/components/site/admin/admin-config"
+  accountMenuItems,
+  isAccountPathActive,
+} from "@/components/site/account/account-config"
 import { cn } from "@/lib/utils"
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { primaryRole, initialized, profile, user, signOut } = useAuth()
+  const { initialized, profile, user, primaryRole, signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
-  const visibleGroups = adminMenuGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => canAccessAdminSection(primaryRole, item.allowedRoles)),
-    }))
-    .filter((group) => group.items.length > 0)
-
-  const currentItem = useMemo(() => {
-    return visibleGroups.flatMap((group) => group.items).find((item) => isAdminPathActive(pathname, item.href)) || getAdminMenuItem("overview")
-  }, [pathname, visibleGroups])
-
   const initials = useMemo(() => {
-    const source = profile?.full_name || user?.email || "AD"
+    const source = profile?.full_name || user?.email || "U"
     return source
       .split(" ")
       .filter(Boolean)
@@ -43,9 +29,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [profile?.full_name, user?.email])
 
   const onSignOut = async () => {
-    if (isSigningOut) {
-      return
-    }
+    if (isSigningOut) return
 
     setIsSigningOut(true)
     try {
@@ -57,30 +41,52 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+
+
+  if (!initialized) {
+    return <div className="page-container py-12"><div className="surface-panel p-8 text-slate-500">Đang tải tài khoản...</div></div>
+  }
+
+  if (!user) {
+    return (
+      <div className="page-container py-12">
+        <div className="surface-panel p-8 text-center">
+          <h1 className="text-3xl font-black tracking-tight text-slate-950">Bạn chưa đăng nhập</h1>
+          <p className="mt-3 text-slate-500">Đăng nhập để xem tài khoản cá nhân của bạn.</p>
+          <Link href="/login?redirect=/account" className="mt-6 inline-flex rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">
+            Đăng nhập ngay
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const roleLabel = primaryRole === "customer" ? "Khách hàng" : primaryRole
+
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
       <aside className="fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-lg font-black text-white shadow-lg shadow-blue-600/20">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-black text-white shadow-lg shadow-blue-600/20">
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatar_url} alt={profile.full_name || "Admin"} className="h-full w-full rounded-2xl object-cover" />
+                <img src={profile.avatar_url} alt={profile.full_name || "User"} className="h-full w-full rounded-full object-cover" />
               ) : (
                 initials
               )}
             </div>
             <div className="min-w-0">
-              <div className="truncate font-heading text-xl font-black tracking-tight text-slate-950">Admin</div>
-              <div className="truncate text-sm text-slate-500">{initialized ? adminRoleLabels[primaryRole] : "Đang đồng bộ vai trò"}</div>
+              <div className="truncate font-heading text-xl font-black tracking-tight text-slate-950">{profile?.full_name || user.email}</div>
+              <div className="truncate text-sm text-slate-500">{roleLabel}</div>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-5">
           <nav className="space-y-2">
-            {visibleGroups.flatMap((group) => group.items).map((item) => {
-              const active = isAdminPathActive(pathname, item.href)
+            {accountMenuItems.map((item) => {
+              const active = isAccountPathActive(pathname, item.href)
               const Icon = item.icon
 
               return (
@@ -94,7 +100,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
                   )}
                 >
-                  <span className={cn("flex size-9 items-center justify-center rounded-xl", active ? "bg-primary text-white" : "bg-slate-100 text-slate-500") }>
+                  <span className={cn("flex size-9 items-center justify-center rounded-xl", active ? "bg-primary text-white" : "bg-slate-100 text-slate-500")}>
                     <Icon className="size-4.5" />
                   </span>
                   <span className="truncate">{item.label}</span>
@@ -120,19 +126,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="pl-[280px]">
-        <header className="sticky top-0 z-30 flex min-h-[64px] items-center justify-between border-b border-slate-200 bg-white/92 px-8 backdrop-blur-xl">
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <span>Quản trị</span>
-            <ChevronRight className="size-4" />
-            <span className="font-semibold text-slate-950">{currentItem?.label || "Dashboard"}</span>
-          </div>
-
+        <header className="sticky top-0 z-30 flex min-h-[64px] items-center justify-end border-b border-slate-200 bg-white/92 px-8 backdrop-blur-xl">
           <Link
-            href="/admin"
+            href="/"
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
           >
             <Home className="size-4" />
-            Trang quản trị
+            Trang chủ
           </Link>
         </header>
 
@@ -143,4 +143,3 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-

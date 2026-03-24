@@ -1,4 +1,4 @@
-﻿import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import {
   BarChart3,
   ClipboardList,
@@ -22,6 +22,7 @@ export type AdminSectionKey =
   | "tours"
   | "activity"
   | "system"
+  | "profile"
 
 export type AdminMenuItem = {
   key: AdminSectionKey
@@ -53,6 +54,7 @@ export const adminSectionKeys: AdminSectionKey[] = [
   "tours",
   "activity",
   "system",
+  "profile",
 ]
 
 export const adminMenuGroups: AdminMenuGroup[] = [
@@ -135,6 +137,19 @@ export const adminMenuGroups: AdminMenuGroup[] = [
       },
     ],
   },
+  {
+    title: "Tài khoản",
+    items: [
+      {
+        key: "profile",
+        href: "/admin/profile",
+        label: "Hồ sơ",
+        description: "Xem và cập nhật thông tin cá nhân của bạn.",
+        icon: Shield,
+        allowedRoles: ["staff", "admin", "super_admin"],
+      },
+    ],
+  },
 ]
 
 export const adminSectionMeta: Record<AdminSectionKey, { eyebrow: string; title: string; description: string }> = {
@@ -177,6 +192,11 @@ export const adminSectionMeta: Record<AdminSectionKey, { eyebrow: string; title:
     eyebrow: "System",
     title: "Ghi chú hệ thống & phân quyền",
     description: "Tổng hợp role, vùng truy cập và các ghi chú kỹ thuật để tách rõ staff với admin/super_admin.",
+  },
+  profile: {
+    eyebrow: "Account",
+    title: "Thông tin cá nhân",
+    description: "Cập nhật thông tin tài khoản quản trị của bạn.",
   },
 }
 

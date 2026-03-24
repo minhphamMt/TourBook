@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { startTransition, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -134,7 +134,6 @@ export function BookingActions({
     <div className="space-y-6">
       <div className="surface-panel p-6">
         <div className="text-xl font-black tracking-tight text-slate-950">Tác vụ booking</div>
-        <div className="mt-2 text-sm text-slate-500">Các thao tác dưới đây bám theo trạng thái thật của booking, thanh toán và yêu cầu hủy hiện tại.</div>
 
         {status ? (
           <div className={`mt-5 rounded-[1.5rem] px-4 py-4 text-sm ${["khong", "loi", "error", "failed"].some((keyword) => normalizeSearch(status).includes(keyword)) ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
@@ -148,7 +147,6 @@ export function BookingActions({
               <CreditCard className="size-4 text-sky-600" />
               Thanh toán booking
             </div>
-            <div className="mt-2 text-sm leading-7 text-slate-500">Hệ thống chỉ cho thanh toán khi booking còn hiệu lực và chưa rơi vào các trạng thái đã hoàn tất, hoàn tiền hoặc hủy.</div>
             <div className="mt-4 text-2xl font-black tracking-tight text-sky-700">{formatCurrency(totalAmount)}</div>
             <Button
               disabled={!canPay || isWorking}
@@ -252,7 +250,6 @@ export function BookingActions({
             <MessageSquareQuote className="size-5 text-orange-500" />
             <div className="text-xl font-black tracking-tight">Đánh giá sau chuyến đi</div>
           </div>
-          <div className="mt-2 text-sm text-slate-500">Chỉ booking đã hoàn thành mới được gửi đánh giá. Review mới hoặc review chỉnh sửa sẽ quay lại trạng thái chờ duyệt.</div>
 
           {review ? (
             <div className="mt-4 rounded-[1.4rem] bg-orange-50 px-4 py-4 text-sm text-slate-600">

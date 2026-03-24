@@ -1,9 +1,9 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Compass, LogOut, Search, Shield, UserCircle2 } from "lucide-react"
-import { FormEvent, useMemo, useState } from "react"
+import { Compass, LogOut, Search, Shield, UserCircle2, UserRound } from "lucide-react"
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,8 @@ export function SiteHeader() {
   const { initialized, user, profile, isManagement, primaryRole, signOut } = useAuth()
   const [search, setSearch] = useState("")
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const initials = useMemo(() => {
     const source = profile?.full_name || user?.email || "TH"
@@ -60,6 +62,17 @@ export function SiteHeader() {
       setIsSigningOut(false)
     }
   }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setAvatarOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const dashboardHref = isManagement ? "/admin" : "/account"
 
@@ -125,22 +138,11 @@ export function SiteHeader() {
           {!initialized ? (
             <div className="size-10 animate-pulse rounded-full bg-slate-200" />
           ) : user ? (
-            <>
-              <Button asChild variant="ghost" className="rounded-full px-3 text-primary">
-                <Link href={dashboardHref}>{isManagement ? "Quản trị" : "Tài khoản"}</Link>
-              </Button>
+            <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={onSignOut}
-                disabled={isSigningOut}
-                className="hidden rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex sm:items-center sm:gap-2"
-              >
-                <LogOut className="size-4" />
-                {isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}
-              </button>
-              <Link
-                href={dashboardHref}
-                className="flex size-11 items-center justify-center overflow-hidden rounded-full border border-white/70 bg-slate-900 text-sm font-bold text-white shadow-lg shadow-slate-900/10"
+                onClick={() => setAvatarOpen((prev) => !prev)}
+                className="flex size-11 items-center justify-center overflow-hidden rounded-full border border-white/70 bg-slate-900 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition hover:shadow-xl"
               >
                 {profile?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -148,8 +150,48 @@ export function SiteHeader() {
                 ) : (
                   initials
                 )}
-              </Link>
-            </>
+              </button>
+
+              {avatarOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+                  <div className="border-b border-slate-100 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-900 text-sm font-bold text-white">
+                        {profile?.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={profile.avatar_url} alt={profile.full_name || "Tài khoản"} className="h-full w-full object-cover" />
+                        ) : (
+                          initials
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold text-slate-950">{profile?.full_name || user.email}</div>
+                        <div className="truncate text-xs text-slate-500">{user.email}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <Link
+                      href={dashboardHref}
+                      onClick={() => setAvatarOpen(false)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <UserRound className="size-4 text-slate-400" />
+                      {isManagement ? "Quản trị" : "Tài khoản"}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => { setAvatarOpen(false); void onSignOut() }}
+                      disabled={isSigningOut}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      <LogOut className="size-4 text-slate-400" />
+                      {isSigningOut ? "Đang đăng xuất..." : "Đăng xuất"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Button asChild variant="ghost" className="rounded-full px-4 text-primary hover:text-primary">
@@ -168,4 +210,5 @@ export function SiteHeader() {
     </header>
   )
 }
+
 

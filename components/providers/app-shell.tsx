@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { startTransition, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
@@ -11,12 +11,17 @@ function isAdminRoute(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/")
 }
 
+function isAccountRoute(pathname: string) {
+  return pathname === "/account" || pathname.startsWith("/account/")
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { initialized, user, isManagement } = useAuth()
 
   const adminRoute = isAdminRoute(pathname)
+  const accountRoute = isAccountRoute(pathname)
   const shouldRedirectToAdmin = initialized && !!user && isManagement && !adminRoute
   const shouldRedirectFromAdmin = initialized && adminRoute && (!user || !isManagement)
 
@@ -57,6 +62,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     )
   }
 
+  if (accountRoute) {
+    return <>{children}</>
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col">
       <SiteHeader />
@@ -73,3 +82,4 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
+
