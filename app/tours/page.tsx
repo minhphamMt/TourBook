@@ -151,7 +151,7 @@ export default async function ToursPage({ searchParams }: { searchParams: Search
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-3 text-sm text-slate-500">
               <Sparkles className="size-4 text-primary" />
-              Filter theo query string để dễ chia sẻ và test UI.
+              Dùng bộ lọc để tìm hành trình phù hợp với lịch trình của bạn.
             </div>
           </div>
 
@@ -164,7 +164,7 @@ export default async function ToursPage({ searchParams }: { searchParams: Search
           ) : (
             <EmptyState
               title="Không tìm thấy tour phù hợp"
-              description="Thử đổi từ khóa, khoảng giá hoặc loại tour. Bộ lọc hiện đang đọc trực tiếp từ query string của URL."
+              description="Thử đổi từ khóa, khoảng giá hoặc loại tour để mở rộng kết quả."
             />
           )}
         </section>
@@ -172,3 +172,4 @@ export default async function ToursPage({ searchParams }: { searchParams: Search
     </div>
   )
 }
+

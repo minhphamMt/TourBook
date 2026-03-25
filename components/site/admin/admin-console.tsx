@@ -1,7 +1,7 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   ArrowRight,
   BarChart3,
@@ -25,10 +25,11 @@ import {
   type AdminSectionKey,
 } from "@/components/site/admin/admin-config"
 import { StatusPill } from "@/components/site/status-pill"
+import { SupportTicketThread } from "@/components/site/support-ticket-thread"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { canMarkBookingPaid, canResolveCancellationRequest, countsAsRecognizedSpend } from "@/lib/booking-logic"
-import { getAllowedStaffTicketTransitions, getSupportStatusDescription } from "@/lib/customer-care-logic"
+import { canStaffReplyTicket, getAllowedStaffTicketTransitions, getSupportStatusDescription } from "@/lib/customer-care-logic"
 import { formatCurrency, formatDateTime, normalizeSearch, statusLabel } from "@/lib/format"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 
@@ -203,6 +204,7 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
   const [reviewReplyDrafts, setReviewReplyDrafts] = useState<Record<string, string>>({})
   const [ticketReplyDrafts, setTicketReplyDrafts] = useState<Record<string, string>>({})
   const [ticketMessagesByTicket, setTicketMessagesByTicket] = useState<Record<string, AdminTicketMessage[]>>({})
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
   const [activities, setActivities] = useState<AdminActivity[]>([])
   const [tours, setTours] = useState<AdminTour[]>([])
   const [systemCounts, setSystemCounts] = useState<SystemCounts>({
@@ -220,6 +222,16 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
   const authenticatedJsonHeaders: Record<string, string> = session?.access_token
     ? { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }
     : { "Content-Type": "application/json" }
+  const supportConversationRef = useRef<HTMLDivElement | null>(null)
+  const openTicketConversation = useCallback((ticketId: string) => {
+    setSelectedTicketId(ticketId)
+
+    if (typeof window !== "undefined" && window.innerWidth < 1280) {
+      window.requestAnimationFrame(() => {
+        supportConversationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      })
+    }
+  }, [])
 
   const stats = useMemo(() => {
     const recognizedBookings = bookings.filter((booking) => countsAsRecognizedSpend({
@@ -463,6 +475,8 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
     setStatus(successMessage)
     await loadSectionData()
   }
+
+
   const renderOverview = () => (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -807,91 +821,152 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
     </div>
   )
 
-  const renderSupport = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <AdminMetricCard label="Ticket đang hiển thị" value={tickets.length} />
-        <AdminMetricCard label="Ticket đang mở" value={stats.openTickets} />
-        <AdminMetricCard label="Ưu tiên cao" value={stats.highPriorityTickets} tone="accent" />
-      </div>
+  const renderSupport = () => {
+    const resolvedSelectedTicketId = tickets.some((ticket) => ticket.id === selectedTicketId)
+      ? selectedTicketId
+      : tickets[0]?.id || null
+    const selectedTicket = tickets.find((ticket) => ticket.id === resolvedSelectedTicketId) || null
+    const selectedMessages = selectedTicket
+      ? (ticketMessagesByTicket[selectedTicket.id] || []).map((message) => ({
+          id: message.id,
+          senderType: message.sender_type,
+          message: message.message,
+          createdAt: message.created_at,
+        }))
+      : []
+    const selectedDraft = selectedTicket ? ticketReplyDrafts[selectedTicket.id] || "" : ""
+    const selectedTicketCanReply = selectedTicket ? canStaffReplyTicket(selectedTicket.status) : false
+    const allowedTransitions = selectedTicket ? getAllowedStaffTicketTransitions(selectedTicket.status) : []
 
-      <AdminPanel title="Danh sách hỗ trợ" icon={Ticket}>
-        <div className="space-y-4">
-          {tickets.length ? tickets.map((ticket) => {
-            const allowedTransitions = getAllowedStaffTicketTransitions(ticket.status)
-            const recentMessages = ticketMessagesByTicket[ticket.id] || []
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <AdminMetricCard label="Ticket đang hiển thị" value={tickets.length} />
+          <AdminMetricCard label="Ticket đang mở" value={stats.openTickets} />
+          <AdminMetricCard label="Ưu tiên cao" value={stats.highPriorityTickets} tone="accent" />
+        </div>
 
-            return (
-              <div key={ticket.id} className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-600">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="font-bold text-slate-950">{ticket.ticket_code}</div>
-                    <div className="mt-1">{ticket.subject}</div>
-                  </div>
-                  <StatusPill status={ticket.status} />
-                </div>
-                <div className="mt-3 leading-7 text-slate-500">{getSupportStatusDescription(ticket.status)}</div>
-                <div className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-400">Mức ưu tiên: {ticket.priority}</div>
-                <div className="mt-1 text-xs text-slate-400">{formatDateTime(ticket.created_at)}</div>
+        <AdminPanel title="Inbox hỗ trợ" icon={Ticket}>
+          <div className="grid gap-6 xl:grid-cols-[20rem,minmax(0,1fr)]">
+            <div className="space-y-3">
+              {tickets.length ? tickets.map((ticket) => {
+                const messageList = ticketMessagesByTicket[ticket.id] || []
+                const latestMessage = messageList.length ? messageList[messageList.length - 1] : null
+                const isSelected = ticket.id === selectedTicket?.id
 
-                {recentMessages.length ? (
-                  <div className="mt-4 space-y-3 rounded-[1.2rem] bg-white px-4 py-4">
-                    <div className="font-bold text-slate-950">Trao đổi gần nhất</div>
-                    {recentMessages.slice(-3).map((message) => (
-                      <div key={message.id} className="rounded-[1rem] bg-slate-50 px-3 py-3">
-                        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.18em] text-slate-400">
-                          <span>{message.sender_type === "staff" ? "Nhân sự" : "Khách hàng"}</span>
-                          <span>{formatDateTime(message.created_at)}</span>
-                        </div>
-                        <div className="mt-2 leading-7 text-slate-600">{message.message}</div>
+                return (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => openTicketConversation(ticket.id)}
+                    className={`w-full rounded-[1.5rem] border px-4 py-4 text-left transition ${isSelected ? "border-slate-900 bg-white shadow-sm" : "border-transparent bg-slate-50 hover:border-slate-200 hover:bg-white"}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-950">{ticket.ticket_code}</div>
+                        <div className="mt-1 truncate text-sm text-slate-600">{ticket.subject}</div>
                       </div>
+                      <StatusPill status={ticket.status} className="shrink-0" />
+                    </div>
+                    <div className="mt-3 line-clamp-2 text-sm leading-6 text-slate-500">
+                      {latestMessage?.message || getSupportStatusDescription(ticket.status)}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-400">
+                      <span className="uppercase tracking-[0.18em]">{ticket.priority}</span>
+                      <span>{formatDateTime(latestMessage?.created_at || ticket.created_at)}</span>
+                    </div>
+                  </button>
+                )
+              }) : <AdminEmptyState title="Chưa có ticket" description="Module support đang trống dữ liệu." />}
+            </div>
+
+            {selectedTicket ? (
+              <div ref={supportConversationRef} className="rounded-[1.8rem] bg-slate-50 p-4 sm:p-5">
+                <div className="border-b border-white/80 pb-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-black uppercase tracking-[0.24em] text-slate-400">{selectedTicket.ticket_code}</div>
+                      <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{selectedTicket.subject}</h2>
+                    </div>
+                    <StatusPill status={selectedTicket.status} />
+                  </div>
+                  <div className="mt-3 text-sm leading-7 text-slate-500">{getSupportStatusDescription(selectedTicket.status)}</div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.18em] text-slate-400">
+                    <span>Mức ưu tiên: {selectedTicket.priority}</span>
+                    <span>{formatDateTime(selectedTicket.created_at)}</span>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {allowedTransitions.map((nextStatus) => (
+                      <Button
+                        key={nextStatus}
+                        variant="outline"
+                        className="rounded-full border-slate-200 bg-white"
+                        onClick={() => void manageTicket(selectedTicket.id, { status: nextStatus as "open" | "in_progress" | "resolved" | "closed" }, `Đã cập nhật ticket ${selectedTicket.ticket_code} sang ${nextStatus}.`)}
+                      >
+                        {nextStatus === "open"
+                          ? "Mở lại"
+                          : nextStatus === "in_progress"
+                            ? "Nhận xử lý"
+                            : nextStatus === "resolved"
+                              ? "Đánh dấu đã xử lý"
+                              : "Đóng ticket"}
+                      </Button>
                     ))}
                   </div>
-                ) : null}
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {allowedTransitions.map((nextStatus) => (
-                    <Button
-                      key={nextStatus}
-                      variant="outline"
-                      className="rounded-full border-slate-200 bg-white"
-                      onClick={() => void manageTicket(ticket.id, { status: nextStatus as "open" | "in_progress" | "resolved" | "closed" }, `Đã cập nhật ticket ${ticket.ticket_code} sang ${nextStatus}.`)}
-                    >
-                      {nextStatus === "open"
-                        ? "Mở lại"
-                        : nextStatus === "in_progress"
-                          ? "Nhận xử lý"
-                          : nextStatus === "resolved"
-                            ? "Đánh dấu đã giải quyết"
-                            : "Đóng ticket"}
-                    </Button>
-                  ))}
                 </div>
 
-                <textarea
-                  value={ticketReplyDrafts[ticket.id] || ""}
-                  onChange={(event) => setTicketReplyDrafts((current) => ({ ...current, [ticket.id]: event.target.value }))}
-                  placeholder="Gửi phản hồi cho khách hàng"
-                  className="mt-4 min-h-28 w-full rounded-[1.3rem] border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+                <SupportTicketThread
+                  className="mt-5 bg-white"
+                  viewerType="staff"
+                  messages={selectedMessages}
+                  customer={{
+                    label: "Người yêu cầu",
+                    initials: "KH",
+                    toneClassName: "bg-sky-100 text-sky-700",
+                  }}
+                  staff={{
+                    label: profile?.full_name || "Hỗ trợ The Horizon",
+                    avatarUrl: profile?.avatar_url,
+                    initials: profile?.full_name || "HT",
+                    toneClassName: "bg-slate-900 text-white",
+                  }}
                 />
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    className="rounded-full bg-slate-900 text-white hover:bg-slate-800"
-                    onClick={() => void manageTicket(ticket.id, {
-                      message: ticketReplyDrafts[ticket.id] || "",
-                    }, `Đã gửi phản hồi cho ticket ${ticket.ticket_code}.`)}
-                  >
-                    Gửi phản hồi
-                  </Button>
+
+                <div className="mt-5 rounded-[1.6rem] border border-slate-200 bg-white p-4">
+                  <div className="text-sm font-semibold text-slate-700">Phản hồi cho khách hàng</div>
+                  <textarea
+                    value={selectedDraft}
+                    onChange={(event) => setTicketReplyDrafts((current) => ({ ...current, [selectedTicket.id]: event.target.value }))}
+                    placeholder={selectedTicketCanReply ? "Nhập nội dung phản hồi cho ticket này" : "Ticket đã đóng, hãy mở lại trước khi gửi thêm tin nhắn"}
+                    disabled={!selectedTicketCanReply}
+                    className="mt-3 min-h-28 w-full rounded-[1.3rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+                  />
+                  {selectedTicket.status === "closed" ? (
+                    <div className="mt-3 text-sm text-amber-700">Ticket đã đóng. Hãy mở lại ticket trước khi tiếp tục trao đổi với khách.</div>
+                  ) : null}
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      className="rounded-full bg-slate-900 text-white hover:bg-slate-800"
+                      disabled={!selectedTicketCanReply || !selectedDraft.trim()}
+                      onClick={() => void manageTicket(selectedTicket.id, {
+                        message: selectedDraft,
+                      }, `Đã gửi phản hồi cho ticket ${selectedTicket.ticket_code}.`)}
+                    >
+                      Gửi phản hồi
+                    </Button>
+                  </div>
                 </div>
               </div>
-            )
-          }) : <AdminEmptyState title="Chưa có ticket" description="Module support đang trống dữ liệu." />}
-        </div>
-      </AdminPanel>
-    </div>
-  )
-
+            ) : (
+              <div ref={supportConversationRef} className="flex min-h-[34rem] items-center justify-center rounded-[1.8rem] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                Chọn một ticket ở cột bên trái để xem đầy đủ cuộc trò chuyện và xử lý tiếp.
+              </div>
+            )}
+          </div>
+        </AdminPanel>
+      </div>
+    )
+  }
   const renderTours = () => (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -1085,6 +1160,8 @@ export function AdminSectionPage({ section }: { section: AdminSectionKey }) {
     </div>
   )
 }
+
+
 
 
 

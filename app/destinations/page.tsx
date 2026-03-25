@@ -17,14 +17,14 @@ export default async function DestinationsPage() {
           <div className="eyebrow">Destinations</div>
           <h1 className="mt-3 text-5xl font-extrabold tracking-tight text-slate-950 sm:text-6xl">Bản đồ cảm hứng cho mọi hành trình</h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-500">
-            Trang này tổng hợp theo dữ liệu `locations` và `tour_destinations`, rất phù hợp để làm landing page cảm hứng, SEO và điều hướng sang danh sách tour theo từng khu vực.
+            Khám phá những điểm đến nổi bật và bắt đầu chuyến đi từ nơi truyền cảm hứng cho bạn nhất.
           </p>
         </div>
         <div className="surface-panel soft-grid grid gap-4 p-6 sm:grid-cols-3">
           {[
             ["Điểm đến", `${destinations.length}+`],
             ["Tour liên kết", `${destinations.reduce((sum, item) => sum + item.totalTours, 0)}`],
-            ["Trạng thái", "Live data"],
+            ["Trạng thái", "Đang mở bán"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-[1.6rem] bg-white/85 p-5 text-center shadow-[0_16px_40px_rgba(25,27,36,0.06)]">
               <div className="text-sm text-slate-400">{label}</div>
@@ -61,7 +61,7 @@ export default async function DestinationsPage() {
           <div className="eyebrow">Explore</div>
           <h2 className="mt-3 text-4xl font-black tracking-tight text-slate-950">Tìm tour theo vùng và phong cách chuyến đi</h2>
           <p className="mt-4 text-base leading-8 text-slate-500">
-            Nếu sau này bạn muốn phát triển thành hub theo từng vùng miền, chỉ cần mở rộng dữ liệu locations và thêm nội dung cho từng khu vực là có thể scale rất nhanh.
+            Chọn điểm đến theo sở thích, nhịp nghỉ dưỡng và kiểu trải nghiệm bạn đang tìm kiếm.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="rounded-full bg-primary px-5 text-white hover:bg-blue-700">
@@ -80,15 +80,16 @@ export default async function DestinationsPage() {
           <div className="rounded-[1.8rem] bg-blue-50 p-6">
             <Compass className="size-7 text-primary" />
             <div className="mt-5 text-2xl font-black tracking-tight text-slate-950">Chọn theo vibe</div>
-            <p className="mt-3 text-sm leading-7 text-slate-500">Luxury getaway, family friendly, văn hóa hay beach escape đều có thể được gom thành các route riêng cho người dùng vào nhanh.</p>
+            <p className="mt-3 text-sm leading-7 text-slate-500">Từ nghỉ dưỡng sang trọng, du lịch gia đình đến những chuyến đi giàu trải nghiệm văn hóa, bạn đều có thể bắt đầu thật nhanh.</p>
           </div>
           <div className="rounded-[1.8rem] bg-orange-50 p-6">
             <MapPinned className="size-7 text-secondary" />
             <div className="mt-5 text-2xl font-black tracking-tight text-slate-950">Từ cảm hứng sang booking</div>
-            <p className="mt-3 text-sm leading-7 text-slate-500">Mỗi destination card đã link thẳng sang `/tours` với query params để phục vụ flow inspiration-to-conversion.</p>
+            <p className="mt-3 text-sm leading-7 text-slate-500">Mỗi điểm đến đều dẫn bạn đến danh sách tour phù hợp để dễ dàng chọn và đặt chỗ.</p>
           </div>
         </div>
       </section>
     </div>
   )
 }
+

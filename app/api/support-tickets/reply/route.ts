@@ -50,8 +50,8 @@ export async function POST(request: Request) {
       return responseError("Bạn không có quyền phản hồi ticket này.", 403)
     }
 
-    if (!canCustomerReplyTicket(ticket.status) && ticket.status !== "closed") {
-      return responseError("Ticket này không còn mở để tiếp tục trao đổi.")
+    if (!canCustomerReplyTicket(ticket.status)) {
+      return responseError("Ticket này đã đóng, bạn không thể gửi thêm tin nhắn.")
     }
 
     const finalStatus = getTicketStatusAfterCustomerReply(ticket.status)

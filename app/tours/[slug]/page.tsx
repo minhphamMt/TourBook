@@ -6,6 +6,7 @@ import { Clock3, Map, MapPin, ShieldCheck, Star } from "lucide-react"
 import { ReviewCard } from "@/components/site/review-card"
 import { SectionHeading } from "@/components/site/section-heading"
 import { StatusPill } from "@/components/site/status-pill"
+import { WishlistButton } from "@/components/site/wishlist-button"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatLongDate, formatShortDate } from "@/lib/format"
 import { getTourBySlug } from "@/lib/site-data"
@@ -46,17 +47,20 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
               <div className="flex items-center gap-2"><MapPin className="size-4 text-primary" />{tour.destinationLabel}</div>
             </div>
           </div>
-          <div className="surface-panel flex items-center gap-5 p-5">
+          <div className="surface-panel flex flex-wrap items-center gap-4 p-5">
             <div>
               <div className="text-sm text-slate-400">Giá từ</div>
               <div className="mt-2 text-4xl font-black tracking-tight text-primary">{formatCurrency(tour.startingPrice)}</div>
-              <div className="mt-1 text-sm text-slate-500">/khách, đã bao gồm dữ liệu seed đang có</div>
+              <div className="mt-1 text-sm text-slate-500">/khách</div>
             </div>
-            <Button asChild className="rounded-full bg-primary px-6 text-white hover:bg-blue-700">
-              <Link href={`/checkout?tour=${tour.slug}${primarySchedule ? `&schedule=${primarySchedule.id}` : ""}&adults=2&children=0&infants=0`}>
-                Đặt ngay
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <WishlistButton tourId={tour.id} variant="pill" />
+              <Button asChild className="rounded-full bg-primary px-6 text-white hover:bg-blue-700">
+                <Link href={`/checkout?tour=${tour.slug}${primarySchedule ? `&schedule=${primarySchedule.id}` : ""}&adults=2&children=0&infants=0`}>
+                  Đặt ngay
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -117,7 +121,7 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
           </div>
 
           <div className="surface-panel overflow-hidden p-8">
-            <SectionHeading eyebrow="Lộ trình" title="Lộ trình chuyến đi" description="Khối bản đồ này đang là placeholder để giữ bố cục đẹp mắt; sau này có thể thay bằng map interactive mà không cần đổi cấu trúc trang." />
+            <SectionHeading eyebrow="Lộ trình" title="Lộ trình chuyến đi" description="Theo dõi những điểm dừng nổi bật trong suốt hành trình của bạn." />
             <div className="mt-8 overflow-hidden rounded-[2rem] bg-sky-50">
               <div className="soft-grid relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-sky-50 via-white to-sky-100">
                 <div className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-[0_20px_60px_rgba(25,27,36,0.12)]">
@@ -186,7 +190,7 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
 
             <div className="mt-6 flex items-center gap-3 rounded-[1.5rem] bg-blue-50 px-4 py-4 text-sm text-slate-600">
               <ShieldCheck className="size-5 text-primary" />
-              <span>Bạn có thể xem trước checkout ở chế độ khách, nhưng phải đăng nhập mới tạo được booking thật trên Supabase.</span>
+              <span>Bạn có thể xem trước thông tin đặt chỗ, sau đó đăng nhập để hoàn tất booking và lưu hành trình.</span>
             </div>
           </div>
 

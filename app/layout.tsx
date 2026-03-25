@@ -4,6 +4,7 @@ import { Manrope, Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import { AppShell } from "@/components/providers/app-shell"
 import { AuthProvider } from "@/components/providers/auth-provider"
+import { WishlistProvider } from "@/components/providers/wishlist-provider"
 
 const heading = Plus_Jakarta_Sans({
   variable: "--font-heading",
@@ -34,7 +35,9 @@ export default function RootLayout({
     <html lang="vi" className={`${heading.variable} ${body.variable} h-full scroll-smooth antialiased`}>
       <body className="min-h-full bg-background text-foreground">
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          <WishlistProvider>
+            <AppShell>{children}</AppShell>
+          </WishlistProvider>
         </AuthProvider>
       </body>
     </html>

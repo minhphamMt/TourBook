@@ -1,4 +1,4 @@
-﻿export function formatCurrency(value: number | null | undefined, currency = "VND") {
+export function formatCurrency(value: number | null | undefined, currency = "VND") {
   if (value == null || Number.isNaN(value)) {
     return "Liên hệ"
   }

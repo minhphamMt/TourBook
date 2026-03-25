@@ -95,7 +95,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Xu hướng"
             title="Tour phổ biến nhất"
-            description="Danh sách được lấy trực tiếp từ dữ liệu Supabase hiện có, ưu tiên các tour nổi bật, lịch mở bán tốt và trải nghiệm được đánh giá cao."
+            description="Những hành trình được nhiều du khách lựa chọn cho kỳ nghỉ sắp tới."
           />
           <Button asChild variant="ghost" className="hidden rounded-full px-4 text-primary md:inline-flex">
             <Link href="/tours">
@@ -181,7 +181,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Cảm nhận"
             title="Họ đã trải nghiệm, còn bạn thì sao?"
-            description="Những đánh giá thực tế giúp giao diện vừa đẹp vừa có chiều sâu dữ liệu. Cùng một component này cũng được tái sử dụng ở trang chi tiết tour và trang reviews."
+            description="Những chia sẻ chân thật giúp bạn dễ chọn chuyến đi phù hợp hơn."
           />
           {reviews[0] ? <ReviewCard review={reviews[0]} /> : null}
         </div>

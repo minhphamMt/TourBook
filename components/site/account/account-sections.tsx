@@ -1,15 +1,17 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
-import { Bell, Heart, LifeBuoy, MapPinned, ShieldCheck, Ticket, UserRound } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { Bell, Heart, LifeBuoy, MapPinned, Ticket, UserRound } from "lucide-react"
 
 import { useAuth } from "@/components/providers/auth-provider"
 import { StatusPill } from "@/components/site/status-pill"
+import { SupportTicketThread } from "@/components/site/support-ticket-thread"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { countsAsOpenBooking, countsAsRecognizedSpend } from "@/lib/booking-logic"
-import { formatCurrency, formatDateTime, formatLongDate, normalizeSearch } from "@/lib/format"
+import { canCustomerReplyTicket, getSupportStatusDescription } from "@/lib/customer-care-logic"
+import { formatCurrency, formatDateTime, normalizeSearch } from "@/lib/format"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 
 type DashboardBooking = {
@@ -46,6 +48,13 @@ type DashboardTicket = {
   created_at: string
 }
 
+type DashboardTicketMessage = {
+  id: string
+  ticket_id: string
+  sender_type: string
+  message: string
+  created_at: string
+}
 type WishlistTour = {
   id: string
   slug: string
@@ -62,6 +71,7 @@ function useAccountData() {
   const [notifications, setNotifications] = useState<DashboardNotification[]>([])
   const [savedTravelers, setSavedTravelers] = useState<DashboardTraveler[]>([])
   const [tickets, setTickets] = useState<DashboardTicket[]>([])
+  const [ticketMessagesByTicket, setTicketMessagesByTicket] = useState<Record<string, DashboardTicketMessage[]>>({})
   const [wishlist, setWishlist] = useState<WishlistTour[]>([])
 
   const loadDashboard = useCallback(async () => {
@@ -95,6 +105,23 @@ function useAccountData() {
       supabase.from("wishlist").select("tour_id").eq("user_id", user.id),
     ])
 
+    const ticketItems = (ticketsResult.data || []) as DashboardTicket[]
+    const ticketIds = ticketItems.map((ticket) => ticket.id)
+    const messagesResult = ticketIds.length
+      ? await supabase
+          .from("support_ticket_messages")
+          .select("id,ticket_id,sender_type,message,created_at")
+          .in("ticket_id", ticketIds)
+          .order("created_at", { ascending: true })
+      : { data: [], error: null }
+
+    const groupedMessages = ((messagesResult.data || []) as DashboardTicketMessage[]).reduce<Record<string, DashboardTicketMessage[]>>((acc, message) => {
+      const current = acc[message.ticket_id] || []
+      current.push(message)
+      acc[message.ticket_id] = current
+      return acc
+    }, {})
+
     const tourIds = wishlistResult.data?.map((item) => item.tour_id) || []
     const wishlistToursResult = tourIds.length
       ? await supabase.from("tours").select("id,slug,name,short_description").in("id", tourIds)
@@ -103,7 +130,8 @@ function useAccountData() {
     setBookings((bookingsResult.data || []) as DashboardBooking[])
     setNotifications((notificationsResult.data || []) as DashboardNotification[])
     setSavedTravelers((travelersResult.data || []) as DashboardTraveler[])
-    setTickets((ticketsResult.data || []) as DashboardTicket[])
+    setTickets(ticketItems)
+    setTicketMessagesByTicket(groupedMessages)
     setWishlist((wishlistToursResult.data || []) as WishlistTour[])
     setLoading(false)
   }, [supabase, user])
@@ -124,14 +152,13 @@ function useAccountData() {
 
   return {
     loading, status, setStatus,
-    bookings, notifications, savedTravelers, tickets, wishlist,
+    bookings, notifications, savedTravelers, tickets, ticketMessagesByTicket, wishlist,
     loadDashboard, supabase, user, profile, session, primaryRole, refreshProfile,
     authenticatedJsonHeaders,
   }
 }
-
 export function AccountOverview() {
-  const { loading, bookings, notifications, savedTravelers } = useAccountData()
+  const { bookings, notifications, savedTravelers } = useAccountData()
 
   const stats = useMemo(() => {
     const activeBookings = bookings.filter((booking) => countsAsOpenBooking({
@@ -443,11 +470,48 @@ export function AccountNotifications() {
 }
 
 export function AccountSupport() {
-  const { status, setStatus, tickets, loadDashboard, authenticatedJsonHeaders } = useAccountData()
+  const { status, setStatus, tickets, ticketMessagesByTicket, loadDashboard, authenticatedJsonHeaders, profile } = useAccountData()
   const [ticketForm, setTicketForm] = useState({
     subject: "",
     message: "",
   })
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
+  const [ticketReplyDrafts, setTicketReplyDrafts] = useState<Record<string, string>>({})
+  const conversationRef = useRef<HTMLDivElement | null>(null)
+
+  const resolvedSelectedTicketId = tickets.some((ticket) => ticket.id === selectedTicketId)
+    ? selectedTicketId
+    : tickets[0]?.id || null
+
+  const openTicketConversation = useCallback((ticketId: string) => {
+    setSelectedTicketId(ticketId)
+
+    if (typeof window !== "undefined" && window.innerWidth < 1280) {
+      window.requestAnimationFrame(() => {
+        conversationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      })
+    }
+  }, [])
+
+  const selectedTicket = useMemo(
+    () => tickets.find((ticket) => ticket.id === resolvedSelectedTicketId) || null,
+    [resolvedSelectedTicketId, tickets]
+  )
+
+  const selectedMessages = useMemo(
+    () => selectedTicket
+      ? (ticketMessagesByTicket[selectedTicket.id] || []).map((message) => ({
+          id: message.id,
+          senderType: message.sender_type,
+          message: message.message,
+          createdAt: message.created_at,
+        }))
+      : [],
+    [selectedTicket, ticketMessagesByTicket]
+  )
+
+  const selectedDraft = selectedTicket ? ticketReplyDrafts[selectedTicket.id] || "" : ""
+  const selectedTicketCanReply = selectedTicket ? canCustomerReplyTicket(selectedTicket.status) : false
 
   return (
     <section className="surface-panel p-6">
@@ -462,43 +526,170 @@ export function AccountSupport() {
         </div>
       ) : null}
 
-      <div className="space-y-3">
-        <Input value={ticketForm.subject} onChange={(event) => setTicketForm((prev) => ({ ...prev, subject: event.target.value }))} placeholder="Chủ đề hỗ trợ" className="h-12 rounded-2xl bg-slate-100/80" />
-        <textarea value={ticketForm.message} onChange={(event) => setTicketForm((prev) => ({ ...prev, message: event.target.value }))} className="min-h-28 w-full rounded-[1.4rem] border border-slate-200 bg-slate-100/80 px-4 py-4 text-sm outline-none" placeholder="Bạn cần The Horizon hỗ trợ điều gì?" />
-        <Button
-          className="rounded-full bg-orange-500 text-white hover:bg-orange-600"
-          onClick={async () => {
-            const response = await fetch("/api/support-tickets", {
-              method: "POST",
-              headers: authenticatedJsonHeaders,
-              body: JSON.stringify({ subject: ticketForm.subject, message: ticketForm.message }),
-            })
-            const result = await response.json()
-            if (!response.ok) {
-              setStatus(result.error || "Không thể tạo ticket.")
-              return
-            }
-            setTicketForm({ subject: "", message: "" })
-            setStatus(`Đã tạo ticket ${result.ticket.ticket_code}.`)
-            await loadDashboard()
-          }}
-        >
-          Gửi ticket mới
-        </Button>
-      </div>
-      <div className="mt-5 space-y-3">
-        {tickets.map((ticket) => (
-          <div key={ticket.id} className="rounded-[1.5rem] bg-slate-50 p-4 text-sm text-slate-600">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="font-bold text-slate-950">{ticket.ticket_code}</div>
-                <div className="mt-1">{ticket.subject}</div>
-              </div>
-              <StatusPill status={ticket.status} />
+      <div className="grid gap-6 xl:grid-cols-[22rem,minmax(0,1fr)]">
+        <div className="space-y-4">
+          <div className="rounded-[1.8rem] bg-slate-50 p-5">
+            <div className="text-sm font-black uppercase tracking-[0.24em] text-slate-400">Tạo ticket mới</div>
+            <div className="mt-2 text-lg font-bold text-slate-950">Mở yêu cầu mới khi cần một luồng hỗ trợ riêng.</div>
+            <div className="mt-4 space-y-3">
+              <Input
+                value={ticketForm.subject}
+                onChange={(event) => setTicketForm((prev) => ({ ...prev, subject: event.target.value }))}
+                placeholder="Chủ đề hỗ trợ"
+                className="h-12 rounded-2xl bg-white"
+              />
+              <textarea
+                value={ticketForm.message}
+                onChange={(event) => setTicketForm((prev) => ({ ...prev, message: event.target.value }))}
+                className="min-h-28 w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-4 text-sm outline-none"
+                placeholder="Bạn cần The Horizon hỗ trợ điều gì?"
+              />
+              <Button
+                className="w-full rounded-full bg-orange-500 text-white hover:bg-orange-600"
+                disabled={!ticketForm.subject.trim() || !ticketForm.message.trim()}
+                onClick={async () => {
+                  const response = await fetch("/api/support-tickets", {
+                    method: "POST",
+                    headers: authenticatedJsonHeaders,
+                    body: JSON.stringify({ subject: ticketForm.subject, message: ticketForm.message }),
+                  })
+                  const result = await response.json()
+                  if (!response.ok) {
+                    setStatus(result.error || "Không thể tạo ticket.")
+                    return
+                  }
+                  setTicketForm({ subject: "", message: "" })
+                  setStatus(`Đã tạo ticket ${result.ticket.ticket_code}.`)
+                  await loadDashboard()
+                  openTicketConversation(result.ticket.id)
+                }}
+              >
+                Gửi ticket mới
+              </Button>
             </div>
-            <div className="mt-2 text-xs text-slate-400">{formatLongDate(ticket.created_at)}</div>
           </div>
-        ))}
+
+          <div className="rounded-[1.8rem] bg-slate-50 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="text-sm font-black uppercase tracking-[0.24em] text-slate-400">Hộp thư hỗ trợ</div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">{tickets.length} ticket</span>
+            </div>
+            <div className="space-y-2">
+              {tickets.length ? tickets.map((ticket) => {
+                const messageList = ticketMessagesByTicket[ticket.id] || []
+                const latestMessage = messageList.length ? messageList[messageList.length - 1] : null
+                const isSelected = ticket.id === selectedTicket?.id
+
+                return (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => openTicketConversation(ticket.id)}
+                    className={`w-full rounded-[1.5rem] border px-4 py-4 text-left transition ${isSelected ? "border-slate-900 bg-white shadow-sm" : "border-transparent bg-white/70 hover:border-slate-200 hover:bg-white"}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-950">{ticket.ticket_code}</div>
+                        <div className="mt-1 truncate text-sm text-slate-600">{ticket.subject}</div>
+                      </div>
+                      <StatusPill status={ticket.status} className="shrink-0" />
+                    </div>
+                    <div className="mt-3 line-clamp-2 text-sm leading-6 text-slate-500">
+                      {latestMessage?.message || getSupportStatusDescription(ticket.status)}
+                    </div>
+                    <div className="mt-3 text-xs text-slate-400">{formatDateTime(latestMessage?.created_at || ticket.created_at)}</div>
+                  </button>
+                )
+              }) : (
+                <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                  Chưa có ticket nào. Khi bạn mở yêu cầu mới, cuộc trò chuyện sẽ xuất hiện ở đây.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div ref={conversationRef} className="rounded-[1.8rem] border border-slate-200 bg-white p-4 sm:p-5">
+          {selectedTicket ? (
+            <>
+              <div className="border-b border-slate-100 pb-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-black uppercase tracking-[0.24em] text-slate-400">{selectedTicket.ticket_code}</div>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{selectedTicket.subject}</h2>
+                  </div>
+                  <StatusPill status={selectedTicket.status} />
+                </div>
+                <div className="mt-3 text-sm leading-7 text-slate-500">{getSupportStatusDescription(selectedTicket.status)}</div>
+              </div>
+
+              <SupportTicketThread
+                className="mt-5"
+                viewerType="customer"
+                messages={selectedMessages}
+                customer={{
+                  label: profile?.full_name || "Bạn",
+                  avatarUrl: profile?.avatar_url,
+                  initials: profile?.full_name || "KH",
+                  toneClassName: "bg-slate-900 text-white",
+                }}
+                staff={{
+                  label: "Hỗ trợ The Horizon",
+                  initials: "TH",
+                  toneClassName: "bg-orange-100 text-orange-700",
+                }}
+              />
+
+              <div className="mt-5 rounded-[1.6rem] border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-semibold text-slate-700">Nhắn lại cho đội hỗ trợ</div>
+                <textarea
+                  value={selectedDraft}
+                  onChange={(event) => setTicketReplyDrafts((current) => ({ ...current, [selectedTicket.id]: event.target.value }))}
+                  placeholder={selectedTicketCanReply ? "Nhập nội dung bạn muốn bổ sung cho ticket này" : "Ticket đã đóng, không thể gửi thêm tin nhắn"}
+                  disabled={!selectedTicketCanReply}
+                  className="mt-3 min-h-28 w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-4 text-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+                />
+                {selectedTicket.status === "closed" ? (
+                  <div className="mt-3 text-sm text-amber-700">
+                    Ticket này đã đóng. Bạn không thể gửi thêm tin nhắn trong luồng hiện tại.
+                  </div>
+                ) : selectedTicket.status === "resolved" ? (
+                  <div className="mt-3 text-sm text-slate-500">
+                    Phản hồi mới sẽ tự đưa ticket về trạng thái mở để đội hỗ trợ tiếp tục xử lý.
+                  </div>
+                ) : null}
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    className="rounded-full bg-slate-900 text-white hover:bg-slate-800"
+                    disabled={!selectedTicketCanReply || !selectedDraft.trim()}
+                    onClick={async () => {
+                      const response = await fetch("/api/support-tickets/reply", {
+                        method: "POST",
+                        headers: authenticatedJsonHeaders,
+                        body: JSON.stringify({ ticketId: selectedTicket.id, message: selectedDraft }),
+                      })
+                      const result = await response.json()
+                      if (!response.ok) {
+                        setStatus(result.error || "Không thể gửi phản hồi ticket.")
+                        return
+                      }
+                      setTicketReplyDrafts((current) => ({ ...current, [selectedTicket.id]: "" }))
+                      setStatus(`Đã gửi thêm phản hồi cho ticket ${selectedTicket.ticket_code}.`)
+                      await loadDashboard()
+                      openTicketConversation(selectedTicket.id)
+                    }}
+                  >
+                    {selectedTicket.status === "resolved" ? "Gửi phản hồi để mở lại" : "Gửi tin nhắn"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-[28rem] items-center justify-center rounded-[1.8rem] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+              Chọn một ticket ở cột bên trái để xem toàn bộ cuộc trò chuyện với đội hỗ trợ.
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )

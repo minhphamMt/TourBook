@@ -225,7 +225,7 @@ export function BookingWizard({
                 <div>
                   <div className="text-2xl font-black tracking-tight text-slate-950">Đăng nhập để đặt tour</div>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
-                    Khi chưa đăng nhập, bạn chỉ có thể xem thông tin lịch khởi hành, giá và tóm tắt booking. Hãy đăng nhập để mở form hành khách, chọn thanh toán và tạo booking thật trong Supabase.
+                    Khi chưa đăng nhập, bạn vẫn có thể xem lịch khởi hành, giá và tóm tắt đặt chỗ. Hãy đăng nhập để điền thông tin hành khách và hoàn tất booking.
                   </p>
                 </div>
               </div>
@@ -456,7 +456,7 @@ export function BookingWizard({
                     </div>
                     <div>
                       <div className="text-2xl font-black tracking-tight text-slate-950">Xác nhận đặt chỗ</div>
-                      <div className="text-sm text-slate-500">Kiểm tra thông tin lần cuối trước khi tạo booking trong Supabase.</div>
+                      <div className="text-sm text-slate-500">Kiểm tra thông tin lần cuối trước khi xác nhận đặt chỗ.</div>
                     </div>
                   </div>
 
@@ -544,12 +544,11 @@ export function BookingWizard({
         <div className="rounded-[2rem] bg-sky-50 p-6 text-sm leading-7 text-slate-600">
           <div className="mb-2 font-bold text-slate-950">Thanh toán an toàn</div>
           {!isAuthenticated
-            ? "Bạn đang ở chế độ xem. Đăng nhập để mở quyền đặt tour và tạo booking thật."
-            : "Sau khi tạo booking, bạn có thể mô phỏng thanh toán trên trang xác nhận để kiểm thử toàn bộ luồng trước khi nối cổng thanh toán thật."}
+            ? "Bạn đang ở chế độ xem. Đăng nhập để hoàn tất đặt tour và lưu thông tin của bạn."
+            : "Sau khi đặt chỗ, bạn có thể tiếp tục sang bước xác nhận và thanh toán một cách thuận tiện."}
         </div>
       </aside>
     </div>
   )
 }
-
 

@@ -1,6 +1,10 @@
 ﻿import { NextResponse } from "next/server"
 
-import { getAllowedStaffTicketTransitions, getTicketStatusAfterStaffReply } from "@/lib/customer-care-logic"
+import {
+  canStaffReplyTicket,
+  getAllowedStaffTicketTransitions,
+  getTicketStatusAfterStaffReply,
+} from "@/lib/customer-care-logic"
 import { requireRequestAuth } from "@/lib/request-auth"
 
 type ManageTicketPayload = {
@@ -58,6 +62,10 @@ export async function POST(request: Request) {
     const ticket = ticketResult.data
     if (!ticket) {
       return responseError("Không tìm thấy ticket hỗ trợ.", 404)
+    }
+
+    if (message && !canStaffReplyTicket(ticket.status)) {
+      return responseError("Ticket đã đóng. Hãy mở lại trước khi gửi tin nhắn.")
     }
 
     const finalStatus = requestedStatus || (message ? getTicketStatusAfterStaffReply(ticket.status) : ticket.status)

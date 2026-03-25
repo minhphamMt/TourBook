@@ -15,7 +15,6 @@ const demoAccounts = [
   { role: "Khách hàng", email: "minh.tran@tourbook.demo", password: "Demo@123456" },
   { role: "Vận hành", email: "thao.staff@tourbook.demo", password: "Demo@123456" },
   { role: "Admin", email: "huy.admin@tourbook.demo", password: "Demo@123456" },
-  { role: "Super Admin", email: "ngoc.superadmin@tourbook.demo", password: "Demo@123456" },
 ]
 
 export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
@@ -69,7 +68,7 @@ export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
             </div>
             <h1 className="mt-5 text-5xl font-black tracking-tight sm:text-6xl">Đăng nhập để tiếp tục hành trình.</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-white/72">
-              Customer sẽ vào khu tài khoản cá nhân. Staff, admin và super_admin sẽ được chuyển thẳng vào `/admin` và bị khóa khỏi toàn bộ public site.
+              Đăng nhập để lưu tour yêu thích, theo dõi booking và tiếp tục hành trình của bạn một cách liền mạch.
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -94,9 +93,9 @@ export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
             <div className="mt-8 rounded-[1.8rem] bg-white/8 p-5 text-sm leading-7 text-white/72">
               <div className="mb-2 flex items-center gap-2 font-bold text-white">
                 <ShieldCheck className="size-4 text-emerald-300" />
-                Demo workflow
+                Truy cập nhanh
               </div>
-              Mỗi tài khoản demo quản trị giờ chỉ có một role chính. Sau khi đăng nhập, hệ thống sẽ tự điều hướng theo vai trò thay vì cho vào public site như trước.
+              Chọn nhanh một tài khoản mẫu để trải nghiệm The Horizon ngay mà không cần nhập lại thông tin đăng nhập.
             </div>
           </div>
         </section>
@@ -128,8 +127,8 @@ export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-500">
               {mode === "signin"
-                ? "Sử dụng tài khoản demo để test luồng customer hoặc khu quản trị đã tách role riêng."
-                : "Schema hiện đã có trigger tạo profile và gán role customer mặc định cho user mới."}
+                ? "Sử dụng tài khoản của bạn hoặc chọn nhanh một tài khoản mẫu để tiếp tục."
+                : "Tạo tài khoản mới để lưu tour yêu thích, theo dõi booking và quản lý hành trình của bạn."}
             </p>
           </div>
 
@@ -166,7 +165,7 @@ export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-[1.7rem] bg-slate-50 px-5 py-4 text-sm text-slate-500">
             <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
               <Sparkles className="size-4 text-secondary" />
-              Redirect sau đăng nhập: customer vào `/account`, management vào `/admin`
+              Sau khi đăng nhập, hệ thống sẽ đưa bạn tới đúng khu vực phù hợp với tài khoản.
             </span>
             <Link href="/tours" className="font-semibold text-primary transition hover:text-blue-700">
               Quay lại khám phá tour
@@ -177,3 +176,4 @@ export function LoginPanel({ redirectTo }: { redirectTo?: string }) {
     </div>
   )
 }
+

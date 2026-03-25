@@ -18,7 +18,7 @@ export default async function ReviewsPage() {
       <SectionHeading
         eyebrow="Reviews"
         title="Cảm nhận thực tế từ khách đã đặt tour"
-        description="Các review card này đọc từ `reviews`, `review_replies` và `profiles`. Chúng cũng được tái sử dụng ở trang chi tiết tour để bảo đảm cảm giác nhất quán trên toàn bộ hệ thống."
+        description="Những đánh giá mới nhất từ du khách sau hành trình cùng The Horizon."
       />
 
       <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -28,7 +28,7 @@ export default async function ReviewsPage() {
             <span className="font-bold">Điểm trung bình</span>
           </div>
           <div className="mt-4 text-4xl font-black tracking-tight text-slate-950">{averageRating.toFixed(1)}</div>
-          <p className="mt-2 text-sm leading-7 text-slate-500">Tổng hợp từ các booking đã hoàn thành và được duyệt hiển thị.</p>
+          <p className="mt-2 text-sm leading-7 text-slate-500">Tổng hợp từ những phản hồi đã được hiển thị công khai.</p>
         </div>
         <div className="surface-panel p-6">
           <div className="flex items-center gap-3 text-primary">
@@ -36,7 +36,7 @@ export default async function ReviewsPage() {
             <span className="font-bold">Tổng reviews</span>
           </div>
           <div className="mt-4 text-4xl font-black tracking-tight text-slate-950">{latestReviews.length}</div>
-          <p className="mt-2 text-sm leading-7 text-slate-500">Mỗi review được gắn với booking thật trong schema, rất hợp để làm testimonial và trust block.</p>
+          <p className="mt-2 text-sm leading-7 text-slate-500">Ngày càng nhiều du khách chia sẻ cảm nhận sau chuyến đi của mình.</p>
         </div>
         <div className="surface-panel p-6">
           <div className="flex items-center gap-3 text-primary">
@@ -44,7 +44,7 @@ export default async function ReviewsPage() {
             <span className="font-bold">Feedback có phản hồi</span>
           </div>
           <div className="mt-4 text-4xl font-black tracking-tight text-slate-950">{latestReviews.filter((review) => review.reply).length}</div>
-          <p className="mt-2 text-sm leading-7 text-slate-500">Rất phù hợp để dựng block moderation và social proof ở cả public site lẫn admin dashboard.</p>
+          <p className="mt-2 text-sm leading-7 text-slate-500">Những phản hồi từ đội ngũ giúp hành trình chăm sóc khách hàng luôn liền mạch.</p>
         </div>
       </div>
 
@@ -54,9 +54,10 @@ export default async function ReviewsPage() {
 
       {!latestReviews.length ? (
         <div className="mt-12">
-          <EmptyState title="Chưa có review được duyệt" description="Hãy seed thêm dữ liệu reviews hoặc tạo review mới từ account page sau khi booking hoàn thành." />
+          <EmptyState title="Chưa có review được duyệt" description="Hiện chưa có đánh giá công khai. Hãy quay lại sau để xem những chia sẻ mới nhất." />
         </div>
       ) : null}
     </div>
   )
 }
+

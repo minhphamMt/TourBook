@@ -1,4 +1,4 @@
-﻿import { statusLabel } from "@/lib/format"
+import { statusLabel } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const statusClasses: Record<string, string> = {
@@ -11,7 +11,8 @@ const statusClasses: Record<string, string> = {
   expired: "bg-slate-200 text-slate-600",
   paid: "bg-emerald-100 text-emerald-700",
   unpaid: "bg-slate-200 text-slate-600",
-  partially_paid: "bg-amber-100 text-amber-700",
+    partially_paid: "bg-amber-100 text-amber-700",
+  authorized: "bg-sky-100 text-sky-700",
   refunded: "bg-indigo-100 text-indigo-700",
   partially_refunded: "bg-violet-100 text-violet-700",
   failed: "bg-rose-100 text-rose-700",

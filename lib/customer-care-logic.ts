@@ -10,8 +10,12 @@ export function canCustomerReplyTicket(status: string) {
   return isTicketActive(status)
 }
 
+export function canStaffReplyTicket(status: string) {
+  return status !== "closed"
+}
+
 export function getTicketStatusAfterCustomerReply(status: string) {
-  if (status === "resolved" || status === "closed") {
+  if (status === "resolved") {
     return "open"
   }
 
@@ -59,11 +63,11 @@ export function getSupportStatusDescription(status: string) {
   }
 
   if (status === "resolved") {
-    return "Ticket đã được giải quyết. Nếu cần bổ sung thông tin, bạn có thể phản hồi để mở lại."
+    return "Ticket đã được xử lý. Nếu cần bổ sung thông tin, khách hàng có thể phản hồi để mở lại."
   }
 
   if (status === "closed") {
-    return "Ticket này đã đóng. Nếu vấn đề phát sinh lại, hãy gửi nội dung mới để mở lại luồng hỗ trợ."
+    return "Ticket đã đóng và không nhận thêm tin nhắn. Cần mở lại ticket hoặc tạo yêu cầu mới để tiếp tục trao đổi."
   }
 
   return "Ticket đã được ghi nhận và đang chờ nhân sự tiếp nhận."

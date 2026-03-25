@@ -33,7 +33,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
       <div className="page-container py-14">
         <div className="surface-panel p-8 text-center">
           <h1 className="text-3xl font-black tracking-tight text-slate-950">Chưa có tour để checkout</h1>
-          <p className="mt-3 text-slate-500">Bạn hãy seed lại dữ liệu hoặc quay về trang tours để kiểm tra bộ dữ liệu Supabase.</p>
+          <p className="mt-3 text-slate-500">Hiện chưa có tour phù hợp để tiếp tục đặt chỗ. Bạn có thể quay lại danh sách tour để chọn hành trình khác.</p>
           <Button asChild className="mt-6 rounded-full bg-primary text-white hover:bg-blue-700">
             <Link href="/tours">Mở danh sách tours</Link>
           </Button>
@@ -49,7 +49,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
           <div className="eyebrow">Checkout</div>
           <h1 className="mt-3 text-5xl font-black tracking-tight text-slate-950 sm:text-6xl">Hoàn tất đặt chỗ của bạn</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-500">
-            Luồng này đọc trực tiếp từ `tours`, `departure_schedules`, `schedule_price_tiers`, `payment_methods`, `coupons`. Người chưa đăng nhập chỉ xem được thông tin, còn tạo booking thật vào Supabase sẽ yêu cầu đăng nhập.
+            Kiểm tra lại thông tin hành trình, chọn phương thức thanh toán phù hợp và hoàn tất đặt chỗ chỉ trong vài bước.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -97,14 +97,14 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Sea
           </div>
           <div>
             <div className="font-bold text-slate-950">Phương thức sẵn sàng</div>
-            <div className="text-sm text-slate-500">{paymentMethods.length} lựa chọn thanh toán demo</div>
+            <div className="text-sm text-slate-500">{paymentMethods.length} lựa chọn thanh toán</div>
           </div>
         </div>
         <div className="surface-panel flex items-center gap-4 p-5">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">%</div>
           <div>
             <div className="font-bold text-slate-950">Coupon khả dụng</div>
-            <div className="text-sm text-slate-500">{coupons.length} ưu đãi có thể áp dụng theo scope</div>
+            <div className="text-sm text-slate-500">{coupons.length} ưu đãi có thể áp dụng</div>
           </div>
         </div>
       </div>

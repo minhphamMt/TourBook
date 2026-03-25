@@ -2,42 +2,48 @@
 import Link from "next/link"
 import { CalendarDays, MapPin, Star, Users } from "lucide-react"
 
-import type { TourSummary } from "@/lib/site-data"
-import { formatCurrency, formatShortDate } from "@/lib/format"
+import { WishlistButton } from "@/components/site/wishlist-button"
 import { Button } from "@/components/ui/button"
+import { formatCurrency, formatShortDate } from "@/lib/format"
+import type { TourSummary } from "@/lib/site-data"
 
 export function TourCard({ tour, featured = false }: { tour: TourSummary; featured?: boolean }) {
   const nextSchedule = tour.schedules.find((schedule) => schedule.status === "open") || tour.schedules[0]
 
   return (
     <article className="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/86 shadow-[0_24px_70px_rgba(25,27,36,0.08)] backdrop-blur-xl transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_32px_90px_rgba(0,80,203,0.14)]">
-      <Link href={`/tours/${tour.slug}`} className="block">
-        <div className="relative aspect-[5/4] overflow-hidden">
-          <Image
-            src={tour.coverImage}
-            alt={tour.name}
-            fill
-            className="object-cover transition duration-700 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/0 to-transparent" />
-          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-            {tour.isFeatured ? <span className="rounded-full bg-white/88 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Phổ biến</span> : null}
-            {tour.tags[0] ? <span className="rounded-full bg-slate-950/65 px-3 py-1 text-[11px] font-semibold text-white">{tour.tags[0].name}</span> : null}
-          </div>
-          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 text-white">
-            <div>
-              <div className="mb-1 flex items-center gap-2 text-sm text-white/80">
-                <MapPin className="size-4" />
-                <span>{tour.destinationLabel}</span>
+      <div className="relative">
+        <Link href={`/tours/${tour.slug}`} className="block">
+          <div className="relative aspect-[5/4] overflow-hidden">
+            <Image
+              src={tour.coverImage}
+              alt={tour.name}
+              fill
+              className="object-cover transition duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/0 to-transparent" />
+            <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+              {tour.isFeatured ? <span className="rounded-full bg-white/88 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Phổ biến</span> : null}
+              {tour.tags[0] ? <span className="rounded-full bg-slate-950/65 px-3 py-1 text-[11px] font-semibold text-white">{tour.tags[0].name}</span> : null}
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 text-white">
+              <div>
+                <div className="mb-1 flex items-center gap-2 text-sm text-white/80">
+                  <MapPin className="size-4" />
+                  <span>{tour.destinationLabel}</span>
+                </div>
+                <h3 className="text-2xl font-black tracking-tight">{tour.name}</h3>
               </div>
-              <h3 className="text-2xl font-black tracking-tight">{tour.name}</h3>
-            </div>
-            <div className="rounded-full bg-white/92 px-3 py-2 text-sm font-bold text-slate-950 shadow-lg">
-              {tour.ratingAverage ? tour.ratingAverage.toFixed(1) : "Mới"}
+              <div className="rounded-full bg-white/92 px-3 py-2 text-sm font-bold text-slate-950 shadow-lg">
+                {tour.ratingAverage ? tour.ratingAverage.toFixed(1) : "Mới"}
+              </div>
             </div>
           </div>
+        </Link>
+        <div className="absolute right-4 top-4 z-10">
+          <WishlistButton tourId={tour.id} className="backdrop-blur-sm" />
         </div>
-      </Link>
+      </div>
 
       <div className="space-y-5 p-6">
         <p className="line-clamp-2 text-sm leading-7 text-slate-500">{tour.shortDescription}</p>
@@ -82,3 +88,4 @@ export function TourCard({ tour, featured = false }: { tour: TourSummary; featur
     </article>
   )
 }
+

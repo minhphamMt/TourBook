@@ -9,7 +9,7 @@ export default function NotFound() {
         <div className="eyebrow justify-center">404</div>
         <h1 className="mt-3 text-5xl font-black tracking-tight text-slate-950">Không tìm thấy nội dung</h1>
         <p className="mt-5 text-lg leading-8 text-slate-500">
-          Trang, tour hoặc booking bạn tìm hiện không tồn tại trong bộ dữ liệu Supabase hiện tại.
+          Trang, tour hoặc booking bạn tìm hiện không còn khả dụng hoặc đã được chuyển sang nơi khác.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <Button asChild className="rounded-full bg-primary text-white hover:bg-blue-700">
