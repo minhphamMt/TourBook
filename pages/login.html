@@ -1,0 +1,42 @@
+﻿<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TourBook | Đăng nhập</title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+  </head>
+  <body>
+    <div id="site-header"></div>
+    <main>
+      <section class="section">
+        <div class="container hero-grid">
+          <div id="login-info"></div>
+          <div class="card-grid login-grid">
+            <section class="form-shell">
+              <h2>Đăng nhập</h2>
+              <form id="login-form" class="form-grid">
+                <label>Email<input type="email" name="email" required /></label>
+                <label>Mật khẩu<input type="password" name="password" required /></label>
+                <button class="button button-primary" type="submit">Đăng nhập</button>
+              </form>
+            </section>
+            <section class="form-shell">
+              <h2>Tạo tài khoản</h2>
+              <form id="signup-form" class="form-grid">
+                <label>Họ và tên<input type="text" name="fullName" required /></label>
+                <label>Email<input type="email" name="email" required /></label>
+                <label>Mật khẩu<input type="password" name="password" required minlength="8" /></label>
+                <button class="button button-secondary" type="submit">Đăng ký</button>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="site-footer"></div>
+    <div id="toast-root"></div>
+    <script type="module" src="/js/login.js"></script>
+  </body>
+</html>

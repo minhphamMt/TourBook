@@ -1,0 +1,405 @@
+﻿.user-portal-sidebar {
+  background: linear-gradient(180deg, rgba(253, 253, 255, 0.98), rgba(242, 245, 252, 0.98));
+}
+
+.user-portal-content {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+}
+
+.user-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 42px;
+}
+
+.user-summary-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 16px;
+  min-height: 190px;
+  padding: 28px;
+  border-radius: 32px;
+  box-shadow: var(--shadow-soft);
+}
+
+.user-summary-card::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  bottom: -34px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  opacity: 0.16;
+  background: currentColor;
+}
+
+.user-summary-card-primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #1556d3 0%, #1b5fe1 100%);
+}
+
+.user-summary-card-light {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(194, 198, 216, 0.2);
+}
+
+.user-summary-card-accent {
+  color: #412100;
+  background: linear-gradient(135deg, #ff9908 0%, #ff8a00 100%);
+}
+
+.user-summary-icon {
+  font-size: 3.2rem;
+  opacity: 0.9;
+}
+
+.user-summary-copy {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+}
+
+.user-summary-copy span {
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.user-summary-copy strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 3.2rem;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.user-summary-copy p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  opacity: 0.88;
+}
+
+.user-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.78fr);
+  gap: 28px;
+  align-items: start;
+  margin-bottom: 32px;
+}
+
+.user-bookings-panel,
+.user-side-panel,
+.user-notify-card,
+.user-settings-card {
+  display: grid;
+  gap: 22px;
+}
+
+.user-booking-list,
+.user-suggestion-list {
+  display: grid;
+  gap: 18px;
+}
+
+.user-booking-item,
+.user-offer-card,
+.user-suggestion-card,
+.user-notify-card,
+.user-settings-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(194, 198, 216, 0.16);
+  border-radius: 30px;
+  box-shadow: var(--shadow-soft);
+}
+
+.user-booking-item {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+.user-booking-thumb {
+  width: 132px;
+  height: 132px;
+  border-radius: 24px;
+  object-fit: cover;
+  flex: none;
+}
+
+.user-booking-copy {
+  flex: 1;
+  display: grid;
+  gap: 12px;
+}
+
+.user-booking-top,
+.user-booking-bottom,
+.user-suggestion-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-booking-copy h4 {
+  font-size: 1.8rem;
+  line-height: 1.08;
+}
+
+.user-booking-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-booking-badge.is-paid {
+  background: #ddf6df;
+  color: #197a2f;
+}
+
+.user-booking-badge.is-pending {
+  background: #fff1cd;
+  color: #b76d00;
+}
+
+.user-booking-badge.is-neutral {
+  background: #edf1ff;
+  color: var(--primary);
+}
+
+.user-booking-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted-strong);
+}
+
+.user-booking-bottom strong,
+.user-suggestion-bottom strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--primary);
+}
+
+.user-booking-bottom a {
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.user-suggestion-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.user-suggestion-media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.user-suggestion-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+.user-suggestion-card:hover .user-suggestion-media img {
+  transform: scale(1.05);
+}
+
+.user-suggestion-flag,
+.user-suggestion-fav {
+  position: absolute;
+  z-index: 1;
+}
+
+.user-suggestion-flag {
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #a45e00;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-suggestion-fav {
+  right: 18px;
+  bottom: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--primary);
+  box-shadow: 0 14px 32px rgba(23, 40, 81, 0.14);
+}
+
+.user-suggestion-copy {
+  display: grid;
+  gap: 12px;
+  padding: 18px 16px 4px;
+}
+
+.user-suggestion-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #006b92;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.user-suggestion-copy h4 {
+  font-size: 1.55rem;
+  line-height: 1.08;
+}
+
+.user-suggestion-bottom span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-strong);
+  font-weight: 800;
+}
+
+.user-offer-card {
+  display: grid;
+  gap: 14px;
+  padding: 28px;
+  background: #eef1ff;
+}
+
+.user-offer-card .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 2rem;
+}
+
+.user-offer-card h3 {
+  font-size: 2rem;
+  line-height: 1.08;
+}
+
+.user-offer-card p {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.8;
+}
+
+.user-offer-card a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  border-radius: 20px;
+  background: #ffffff;
+  color: var(--primary);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.user-secondary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.92fr);
+  gap: 28px;
+}
+
+.user-notify-card,
+.user-settings-card {
+  padding: 28px;
+}
+
+.user-settings-form {
+  display: grid;
+  gap: 16px;
+}
+
+.user-settings-form button {
+  min-height: 54px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--primary), #1e68eb);
+  color: #ffffff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .user-summary-grid,
+  .user-secondary-grid,
+  .user-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .user-summary-grid {
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .user-booking-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .user-booking-thumb {
+    width: 100%;
+    height: 220px;
+  }
+
+  .user-booking-copy h4 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .user-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-summary-card,
+  .user-notify-card,
+  .user-settings-card,
+  .user-offer-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .user-booking-item {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .user-booking-top,
+  .user-booking-bottom,
+  .user-suggestion-bottom {
+    align-items: start;
+    flex-direction: column;
+  }
+}
