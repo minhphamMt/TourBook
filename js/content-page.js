@@ -1,5 +1,5 @@
 ﻿import { getCmsPageBySlug } from "./api.js";
-import { createPageHero, escapeHtml, mountLayout, qs, setLoading, setPageError } from "./shared.js";
+import { createPageHero, escapeHtml, mountLayout, qs, setLoading, setPageError } from "./shared.js?v=20260331m";
 
 export async function mountContentPage(pageKey, slug, fallbackTitle) {
   await mountLayout(pageKey);

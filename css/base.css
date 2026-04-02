@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 
 :root {
@@ -21,6 +21,12 @@
   --success: #14805f;
   --danger: #d4483e;
   --warning: #ad6b00;
+  --portal-sidebar-bg: linear-gradient(180deg, rgba(251, 252, 255, 0.98), rgba(239, 243, 252, 0.98));
+  --portal-panel-bg: rgba(255, 255, 255, 0.96);
+  --portal-panel-bg-soft: rgba(255, 255, 255, 0.88);
+  --portal-panel-border: rgba(194, 198, 216, 0.16);
+  --portal-chip-bg: rgba(22, 88, 218, 0.1);
+  --portal-chip-text: var(--primary);
   --shadow-soft: 0 18px 50px rgba(27, 36, 66, 0.08);
   --shadow-card: 0 28px 70px rgba(19, 29, 56, 0.1);
   --radius-xl: 32px;
@@ -581,6 +587,22 @@ a.button[aria-disabled="true"] {
   transform: scale(1.04);
 }
 
+.media-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(232, 236, 248, 0.96), rgba(243, 246, 255, 0.96));
+  color: var(--muted-strong);
+  text-align: center;
+}
+
+.media-placeholder span {
+  max-width: 14ch;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .tour-card-body,
 .destination-card-body {
   display: grid;
@@ -830,15 +852,9 @@ a.button[aria-disabled="true"] {
   color: var(--primary);
 }
 
-.footer-newsletter {
-  display: flex;
+.footer-link-stack {
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
-}
-
-.footer-newsletter input {
-  min-width: 0;
-  flex: 1 1 180px;
 }
 
 .site-footer-bottom {
@@ -1586,4 +1602,21 @@ a.button[aria-disabled="true"] {
     color: #ffffff;
     box-shadow: 0 18px 34px rgba(229, 119, 0, 0.28);
   }
+}
+
+
+
+.page-hero-inner > div > p,
+.section-heading > p,
+.portal-section-head > div > p,
+.admin-ops-toolbar-copy > p,
+.admin-table-headline > div > p,
+.admin-chart-head > div > p,
+.admin-page-intro > div > p {
+  display: none;
+}
+
+.admin-modal-header > div > p,
+.admin-modal-section-head > div > p {
+  display: none;
 }

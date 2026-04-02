@@ -1,3 +1,228 @@
-﻿.detail-sidebar {
-  align-content: start;
+﻿.detail-column > *,
+.detail-sidebar > * {
+  min-width: 0;
+}
+
+.booking-overview-card,
+.booking-action-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-overview-grid,
+.booking-lifecycle-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.booking-overview-grid {
+  grid-template-columns: minmax(240px, 0.88fr) minmax(0, 1.12fr);
+  align-items: start;
+}
+
+.booking-overview-media,
+.booking-action-media {
+  overflow: hidden;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(232, 237, 251, 0.96), rgba(243, 246, 255, 0.98));
+}
+
+.booking-overview-image,
+.booking-action-image {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  object-fit: cover;
+}
+
+.booking-overview-copy {
+  display: grid;
+  gap: 18px;
+}
+
+.booking-overview-copy .info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.booking-overview-copy .card,
+.booking-payment-card {
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 36px rgba(24, 39, 72, 0.06);
+}
+
+.booking-overview-copy .card small,
+.booking-action-row span,
+.booking-payment-meta,
+.booking-payment-meta span,
+.booking-refund-row span {
+  color: var(--muted);
+}
+
+.booking-overview-copy .card strong,
+.booking-payment-card strong,
+.booking-action-row strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.booking-overview-copy .card strong {
+  font-size: 1.08rem;
+}
+
+.booking-lifecycle-grid {
+  grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
+}
+
+.booking-payment-stack,
+.booking-payment-stack section,
+.booking-payment-stack-inner {
+  display: grid;
+  gap: 16px;
+}
+
+.booking-payment-stack h3,
+.booking-action-card h2,
+.booking-payment-card h4 {
+  margin: 0;
+}
+
+.booking-payment-head,
+.booking-payment-status,
+.booking-action-row,
+.booking-refund-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.booking-payment-head {
+  align-items: start;
+}
+
+.booking-payment-head p,
+.booking-payment-card p,
+.booking-lifecycle-item p,
+.booking-action-card > p {
+  margin: 0;
+}
+
+.booking-payment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.booking-payment-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-refund-list {
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.booking-refund-row {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.booking-inline-note {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(22, 88, 218, 0.1);
+  color: var(--primary-deep);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.booking-inline-note.is-warning {
+  background: rgba(255, 146, 21, 0.14);
+  color: var(--warning);
+}
+
+.booking-inline-note.is-success {
+  background: rgba(20, 128, 95, 0.14);
+  color: var(--success);
+}
+
+.booking-lifecycle-item {
+  border-left: 4px solid transparent;
+}
+
+.booking-lifecycle-item.is-success {
+  border-left-color: var(--success);
+}
+
+.booking-lifecycle-item.is-danger {
+  border-left-color: var(--danger);
+}
+
+.booking-lifecycle-item.is-info {
+  border-left-color: var(--primary);
+}
+
+.booking-lifecycle-item > div {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-action-card {
+  position: sticky;
+  top: 112px;
+  gap: 18px;
+}
+
+.booking-action-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-action-row {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.booking-action-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.booking-action-card .price-lines {
+  padding-top: 4px;
+}
+
+@media (max-width: 1080px) {
+  .booking-overview-grid,
+  .booking-lifecycle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-action-card {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-overview-grid {
+    gap: 18px;
+  }
+
+  .booking-payment-head,
+  .booking-action-row,
+  .booking-refund-row,
+  .booking-payment-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .booking-overview-copy .info-grid {
+    grid-template-columns: 1fr;
+  }
 }

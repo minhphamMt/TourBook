@@ -199,10 +199,15 @@
   height: 240px;
 }
 
-.checkout-summary-media img {
+.checkout-summary-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.checkout-summary-image.media-placeholder {
+  display: grid;
+  place-items: center;
 }
 
 .checkout-summary-badge {
@@ -315,4 +320,66 @@
   .checkout-hero-copy h1 {
     font-size: 2.9rem;
   }
+}
+
+.checkout-summary-notes {
+  display: grid;
+  gap: 12px;
+}
+
+.checkout-coupon-note {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(22, 88, 218, 0.08);
+  border: 1px solid transparent;
+}
+
+.checkout-coupon-note.is-success {
+  background: rgba(23, 166, 108, 0.12);
+  border-color: rgba(23, 166, 108, 0.18);
+  color: #176b52;
+}
+
+.checkout-coupon-note.is-warning {
+  background: rgba(214, 99, 65, 0.1);
+  border-color: rgba(214, 99, 65, 0.18);
+  color: #974329;
+}
+
+.checkout-coupon-note.is-info {
+  background: rgba(22, 88, 218, 0.08);
+  border-color: rgba(22, 88, 218, 0.12);
+}
+
+.checkout-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(245, 247, 255, 0.92);
+}
+
+.checkout-toggle input {
+  margin-top: 4px;
+  accent-color: var(--primary);
+}
+
+.checkout-toggle-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.checkout-toggle-copy strong,
+.checkout-toggle-copy small {
+  display: block;
+}
+
+.checkout-toggle-copy small {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.checkout-invoice-grid[hidden] {
+  display: none;
 }

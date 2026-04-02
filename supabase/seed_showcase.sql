@@ -202,14 +202,6 @@ select public.seed_demo_user(
   'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=400&q=80'
 );
 
-select public.seed_demo_user(
-  '00000000-0000-0000-0000-000000000401',
-  'ngoc.superadmin@tourbook.demo',
-  'Demo@123456',
-  'Ngọc Đặng',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80'
-);
-
 update public.profiles
 set
   phone = case id

@@ -5,13 +5,13 @@
 .home-hero-shell {
   position: relative;
   overflow: hidden;
-  min-height: 840px;
+  min-height: 880px;
   border-radius: 42px;
   box-shadow: var(--shadow-card);
 }
 
 .home-hero-image,
-.home-story-visual img {
+.home-banner-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -22,16 +22,22 @@
   inset: 0;
 }
 
+.home-hero-image.media-placeholder,
+.home-banner-image.media-placeholder,
+.home-destination-image.media-placeholder {
+  background: linear-gradient(135deg, rgba(19, 32, 68, 0.16), rgba(231, 238, 255, 0.92));
+}
+
 .home-hero-layer {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.26) 0%, rgba(17, 24, 39, 0.12) 35%, rgba(244, 243, 251, 0.06) 62%, rgba(244, 243, 251, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.3) 0%, rgba(17, 24, 39, 0.14) 30%, rgba(244, 243, 251, 0.08) 62%, rgba(244, 243, 251, 0.96) 100%);
 }
 
 .home-hero-bottom-fade {
   position: absolute;
   inset: auto 0 0;
-  height: 210px;
+  height: 220px;
   background: linear-gradient(180deg, rgba(244, 243, 251, 0) 0%, rgba(244, 243, 251, 0.92) 78%, rgba(244, 243, 251, 1) 100%);
 }
 
@@ -41,15 +47,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 840px;
-  padding: 120px 0 220px;
+  min-height: 880px;
+  padding: 110px 0 220px;
 }
 
 .home-hero-content {
   display: grid;
   justify-items: center;
   gap: 22px;
-  width: min(100%, 860px);
+  width: min(100%, 980px);
   text-align: center;
 }
 
@@ -60,34 +66,83 @@
 .home-hero-content h1,
 .home-section-head h2,
 .home-story-copy h2,
-.home-offer-content h2 {
+.home-offer-content h2,
+.home-banner-copy h3,
+.home-editorial-card h3 {
   margin: 0;
   font-family: "Plus Jakarta Sans", sans-serif;
   letter-spacing: -0.06em;
 }
 
 .home-hero-content h1 {
-  max-width: 760px;
-  font-size: clamp(3.4rem, 7vw, 5.8rem);
+  max-width: 820px;
+  font-size: clamp(3.4rem, 7vw, 5.6rem);
   line-height: 0.92;
   color: #ffffff;
   text-shadow: 0 12px 34px rgba(16, 22, 44, 0.22);
 }
 
 .home-hero-content p {
-  max-width: 680px;
+  max-width: 720px;
   margin: 0;
-  font-size: 1.12rem;
-  line-height: 1.7;
+  font-size: 1.08rem;
+  line-height: 1.72;
   color: rgba(255, 255, 255, 0.88);
+}
+
+.home-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 940px);
+}
+
+.home-proof-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 38px rgba(17, 24, 39, 0.12);
+  backdrop-filter: blur(18px);
+  text-align: left;
+}
+
+.home-proof-card span,
+.home-destination-region,
+.home-coupon-meta span,
+.home-review-mini-card span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-proof-card span,
+.home-proof-card p,
+.home-review-mini-card span {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.home-proof-card strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.home-proof-card p {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .home-search-panel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 0;
-  width: min(100%, 920px);
-  margin-top: 14px;
+  width: min(100%, 980px);
+  margin-top: 10px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.78);
   border-radius: 28px;
@@ -97,6 +152,7 @@
 }
 
 .home-search-field {
+  display: grid;
   gap: 8px;
   padding: 14px 18px;
   border-right: 1px solid rgba(104, 114, 151, 0.14);
@@ -145,7 +201,7 @@
 
 .home-search-submit {
   align-self: center;
-  min-width: 166px;
+  min-width: 184px;
   padding-inline: 28px;
 }
 
@@ -154,6 +210,26 @@
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
+}
+
+.home-hero-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.home-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .home-section-head {
@@ -169,6 +245,13 @@
 .home-offer-content h2 {
   font-size: clamp(2.2rem, 4vw, 3.4rem);
   line-height: 1;
+}
+
+.home-section-head p {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
 }
 
 .home-section-link {
@@ -236,32 +319,38 @@
   box-shadow: var(--shadow-soft);
 }
 
-.home-destination-card img {
+.home-destination-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.45s ease;
 }
 
-.home-destination-card:hover img {
+.home-destination-card:hover .home-destination-image {
   transform: scale(1.05);
 }
 
 .home-destination-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(12, 19, 40, 0.02) 15%, rgba(12, 19, 40, 0.28) 45%, rgba(12, 19, 40, 0.86) 100%);
+  background: linear-gradient(180deg, rgba(12, 19, 40, 0.04) 15%, rgba(12, 19, 40, 0.32) 45%, rgba(12, 19, 40, 0.88) 100%);
 }
 
 .home-destination-copy {
   position: absolute;
   inset: auto 24px 22px;
   z-index: 1;
+  display: grid;
+  gap: 8px;
   color: #ffffff;
 }
 
+.home-destination-region {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .home-destination-copy h3 {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1.9rem;
   letter-spacing: -0.04em;
@@ -303,7 +392,9 @@
   min-height: 100%;
 }
 
-.home-testimonial-card {
+.home-testimonial-card,
+.home-editorial-card,
+.home-review-mini-card {
   display: grid;
   gap: 18px;
   padding: 28px;
@@ -318,7 +409,9 @@
   letter-spacing: 0.18em;
 }
 
-.home-testimonial-card blockquote {
+.home-testimonial-card blockquote,
+.home-editorial-card p,
+.home-review-mini-card p {
   margin: 0;
   font-size: 1rem;
   line-height: 1.85;
@@ -336,11 +429,60 @@
   color: var(--muted);
 }
 
-.home-story-visual {
-  overflow: hidden;
+.home-review-rail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-review-mini-card strong,
+.home-editorial-card h3,
+.home-coupon-card h3 {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.home-story-stack {
+  display: grid;
+  gap: 18px;
   min-height: 100%;
+}
+
+.home-banner-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 340px;
   border-radius: 30px;
   box-shadow: var(--shadow-card);
+}
+
+.home-banner-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 15, 34, 0.08) 12%, rgba(10, 15, 34, 0.35) 55%, rgba(10, 15, 34, 0.9) 100%);
+}
+
+.home-banner-copy {
+  position: absolute;
+  inset: auto 24px 24px;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  color: #ffffff;
+}
+
+.home-banner-copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.home-editorial-card {
+  align-content: start;
+}
+
+.home-editorial-card .text-link {
+  font-size: 0.95rem;
 }
 
 .home-offer-panel {
@@ -352,6 +494,11 @@
   box-shadow: 0 30px 68px rgba(22, 88, 218, 0.24);
 }
 
+.home-offer-panel-empty {
+  background: linear-gradient(135deg, #4d5b86 0%, #2f3c69 100%);
+  box-shadow: 0 26px 60px rgba(34, 43, 74, 0.22);
+}
+
 .home-offer-content {
   position: relative;
   z-index: 1;
@@ -361,8 +508,13 @@
   text-align: center;
 }
 
+.home-offer-content-left {
+  justify-items: start;
+  text-align: left;
+}
+
 .home-offer-content p {
-  max-width: 720px;
+  max-width: 820px;
   margin: 0;
   color: rgba(255, 255, 255, 0.84);
   line-height: 1.8;
@@ -372,27 +524,54 @@
   color: #ffffff;
 }
 
-.home-offer-form {
+.home-coupon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.home-coupon-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.home-coupon-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-coupon-card h3,
+.home-coupon-card p,
+.home-coupon-meta span {
+  color: #ffffff;
+}
+
+.home-coupon-card p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.home-coupon-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  justify-content: center;
-  width: min(100%, 580px);
-}
-
-.home-offer-form input {
-  flex: 1 1 260px;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.94);
-}
-
-.home-offer-code {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.home-offer-code strong {
-  color: #ffffff;
+  gap: 10px;
 }
 
 .home-offer-orb {
@@ -415,10 +594,18 @@
   right: -110px;
 }
 
+@media (max-width: 1180px) {
+  .home-proof-grid,
+  .home-coupon-grid,
+  #featured-tours {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1080px) {
   .home-hero-shell,
   .home-hero-inner {
-    min-height: 760px;
+    min-height: 800px;
   }
 
   .home-search-panel,
@@ -445,20 +632,21 @@
     min-height: 260px;
   }
 
-  #featured-tours {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-review-rail,
+  .home-coupon-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
   .home-hero-shell,
   .home-hero-inner {
-    min-height: 700px;
+    min-height: 760px;
     border-radius: 28px;
   }
 
   .home-hero-inner {
-    padding: 100px 0 180px;
+    padding: 96px 0 180px;
   }
 
   .home-hero-content h1 {
@@ -470,16 +658,19 @@
     flex-direction: column;
   }
 
+  .home-proof-grid,
   #featured-tours {
     grid-template-columns: 1fr;
   }
 
   .home-testimonial-card,
-  .home-offer-panel {
+  .home-offer-panel,
+  .home-editorial-card,
+  .home-review-mini-card {
     padding: 24px;
   }
 
-  .home-story-visual {
-    min-height: 320px;
+  .home-banner-card {
+    min-height: 300px;
   }
 }

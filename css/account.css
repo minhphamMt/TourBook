@@ -1,17 +1,122 @@
-﻿.user-portal-sidebar {
+﻿body[data-account-page] {
+  --user-sidebar-width: 19rem;
+}
+
+.portal-sidebar.user-portal-sidebar {
+  width: var(--user-sidebar-width);
+}
+
+.portal-main.user-portal-main {
+  margin-left: var(--user-sidebar-width);
+}
+
+.portal-topbar.user-topbar {
+  left: var(--user-sidebar-width);
+  right: 0;
+  width: auto;
+  min-height: 74px;
+  padding: 14px 24px;
+  background: rgba(246, 248, 252, 0.92);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(207, 214, 230, 0.6);
+}
+
+.user-topbar .admin-topbar-copy {
+  min-width: 0;
+}
+
+.user-topbar .admin-topbar-tools {
+  flex: 1;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.user-topbar .admin-search-wrap {
+  width: min(100%, 360px);
+}
+
+.user-topbar .portal-profile-block {
+  flex-shrink: 0;
+}
+.user-portal-sidebar {
   background: linear-gradient(180deg, rgba(253, 253, 255, 0.98), rgba(242, 245, 252, 0.98));
 }
 
+.user-portal-main {
+  background: transparent;
+}
+
 .user-portal-content {
-  width: min(100%, 1280px);
+  width: min(100%, 1320px);
   margin: 0 auto;
 }
 
-.user-summary-grid {
+.user-sidebar-profile,
+.user-panel,
+.user-summary-card,
+.user-wishlist-card,
+.user-data-card,
+.user-form-card,
+.user-meta-item,
+.user-notification-row,
+.user-ticket-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(194, 198, 216, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+
+.user-sidebar-profile,
+.user-panel,
+.user-form-card,
+.user-meta-item,
+.user-notification-row,
+.user-ticket-card,
+.user-data-card {
+  border-radius: 30px;
+}
+
+.user-sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+}
+
+.user-sidebar-profile p,
+.user-overview-hero p,
+.user-summary-copy p,
+.user-ticket-card p,
+.user-data-note,
+.user-notification-copy p,
+.user-meta-item p {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.7;
+}
+
+.user-overview-hero {
+  margin-bottom: 28px;
+}
+
+.user-overview-hero h1 {
+  max-width: 16ch;
+}
+
+.user-summary-grid,
+.user-secondary-grid,
+.user-tools-grid,
+.user-settings-grid,
+.user-main-grid,
+.user-ticket-meta-grid,
+.user-form-grid,
+.user-meta-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
-  margin-bottom: 42px;
+}
+
+.user-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 32px;
 }
 
 .user-summary-card {
@@ -21,8 +126,6 @@
   gap: 16px;
   min-height: 190px;
   padding: 28px;
-  border-radius: 32px;
-  box-shadow: var(--shadow-soft);
 }
 
 .user-summary-card::after {
@@ -44,8 +147,6 @@
 
 .user-summary-card-light {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(194, 198, 216, 0.2);
 }
 
 .user-summary-card-accent {
@@ -54,8 +155,8 @@
 }
 
 .user-summary-icon {
-  font-size: 3.2rem;
-  opacity: 0.9;
+  font-size: 3rem;
+  opacity: 0.92;
 }
 
 .user-summary-copy {
@@ -71,56 +172,71 @@
 
 .user-summary-copy strong {
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 3.2rem;
+  font-size: 3rem;
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
 
-.user-summary-copy p {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  opacity: 0.88;
-}
-
 .user-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.78fr);
-  gap: 28px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+  margin-bottom: 28px;
   align-items: start;
-  margin-bottom: 32px;
 }
 
-.user-bookings-panel,
-.user-side-panel,
-.user-notify-card,
-.user-settings-card {
+.user-secondary-grid,
+.user-tools-grid,
+.user-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 28px;
+}
+
+.user-panel {
   display: grid;
   gap: 22px;
+  padding: 28px;
+}
+
+.user-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.user-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(194, 198, 216, 0.2);
+  border-radius: 999px;
+  background: #f3f5ff;
+  color: var(--muted-strong);
+  font-weight: 800;
+}
+
+.user-filter-pill.is-active {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .user-booking-list,
-.user-suggestion-list {
+.user-ticket-list,
+.user-wishlist-grid,
+.user-notification-list,
+.user-data-list-grid {
   display: grid;
   gap: 18px;
-}
-
-.user-booking-item,
-.user-offer-card,
-.user-suggestion-card,
-.user-notify-card,
-.user-settings-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(194, 198, 216, 0.16);
-  border-radius: 30px;
-  box-shadow: var(--shadow-soft);
 }
 
 .user-booking-item {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 24px;
+  gap: 22px;
+  padding: 22px;
+  border-radius: 28px;
+  background: #f8f9ff;
+  border: 1px solid rgba(194, 198, 216, 0.12);
 }
 
 .user-booking-thumb {
@@ -131,6 +247,12 @@
   flex: none;
 }
 
+.user-booking-thumb.media-placeholder,
+.user-wishlist-image.media-placeholder {
+  display: grid;
+  place-items: center;
+}
+
 .user-booking-copy {
   flex: 1;
   display: grid;
@@ -139,228 +261,259 @@
 
 .user-booking-top,
 .user-booking-bottom,
-.user-suggestion-bottom {
+.user-data-head,
+.user-ticket-head,
+.user-notification-row,
+.user-wishlist-bottom {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+}
+
+.user-booking-copy h4,
+.user-ticket-card h4,
+.user-wishlist-copy h4,
+.user-form-card h3 {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -0.04em;
 }
 
 .user-booking-copy h4 {
-  font-size: 1.8rem;
-  line-height: 1.08;
+  font-size: 1.6rem;
 }
 
-.user-booking-badge {
+.user-booking-meta,
+.user-booking-facts,
+.user-ticket-meta-grid small,
+.user-data-list small,
+.user-notification-meta,
+.user-sidebar-profile p {
+  color: var(--muted);
+}
+
+.user-booking-meta,
+.user-booking-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.user-booking-meta span,
+.user-booking-facts span,
+.user-notification-meta span {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.user-booking-badge.is-paid {
-  background: #ddf6df;
-  color: #197a2f;
-}
-
-.user-booking-badge.is-pending {
-  background: #fff1cd;
-  color: #b76d00;
-}
-
-.user-booking-badge.is-neutral {
-  background: #edf1ff;
-  color: var(--primary);
-}
-
-.user-booking-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--muted-strong);
+  gap: 6px;
 }
 
 .user-booking-bottom strong,
-.user-suggestion-bottom strong {
+.user-wishlist-bottom strong {
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 2rem;
+  font-size: 1.85rem;
   line-height: 1;
   letter-spacing: -0.05em;
   color: var(--primary);
 }
 
-.user-booking-bottom a {
-  color: var(--text);
-  font-size: 1.05rem;
-  font-weight: 700;
+.user-ticket-card,
+.user-data-card,
+.user-notification-row {
+  padding: 22px;
 }
 
-.user-suggestion-card {
-  padding: 0;
-  overflow: hidden;
+.user-ticket-meta-grid,
+.user-data-list,
+.user-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.user-suggestion-media {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
-}
-
-.user-suggestion-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.45s ease;
-}
-
-.user-suggestion-card:hover .user-suggestion-media img {
-  transform: scale(1.05);
-}
-
-.user-suggestion-flag,
-.user-suggestion-fav {
-  position: absolute;
-  z-index: 1;
-}
-
-.user-suggestion-flag {
-  top: 18px;
-  left: 18px;
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #a45e00;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.user-suggestion-fav {
-  right: 18px;
-  bottom: 18px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--primary);
-  box-shadow: 0 14px 32px rgba(23, 40, 81, 0.14);
-}
-
-.user-suggestion-copy {
+.user-ticket-meta-grid div,
+.user-data-list span,
+.user-meta-item {
   display: grid;
-  gap: 12px;
-  padding: 18px 16px 4px;
-}
-
-.user-suggestion-location {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  margin: 0;
-  color: #006b92;
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
-.user-suggestion-copy h4 {
-  font-size: 1.55rem;
-  line-height: 1.08;
-}
-
-.user-suggestion-bottom span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--muted-strong);
-  font-weight: 800;
-}
-
-.user-offer-card {
-  display: grid;
-  gap: 14px;
-  padding: 28px;
-  background: #eef1ff;
-}
-
-.user-offer-card .material-symbols-outlined {
-  color: var(--primary);
-  font-size: 2rem;
-}
-
-.user-offer-card h3 {
-  font-size: 2rem;
-  line-height: 1.08;
-}
-
-.user-offer-card p {
-  margin: 0;
-  color: var(--muted-strong);
-  line-height: 1.8;
-}
-
-.user-offer-card a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 58px;
-  border-radius: 20px;
-  background: #ffffff;
-  color: var(--primary);
+.user-ticket-meta-grid strong,
+.user-data-list strong,
+.user-meta-item strong,
+.user-sidebar-profile strong {
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
 }
 
-.user-secondary-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.92fr);
-  gap: 28px;
+.user-ticket-meta-grid a {
+  color: var(--primary);
 }
 
-.user-notify-card,
-.user-settings-card {
-  padding: 28px;
+.user-ticket-thread {
+  gap: 12px;
 }
 
-.user-settings-form {
+.user-ticket-message.is-staff {
+  border-left: 4px solid var(--primary);
+}
+
+.user-ticket-message.is-customer {
+  border-left: 4px solid var(--accent);
+}
+
+.user-inline-form,
+.user-data-form {
   display: grid;
   gap: 16px;
 }
 
-.user-settings-form button {
-  min-height: 54px;
+.user-inline-form textarea,
+.user-data-form textarea,
+.user-data-form input,
+.user-data-form select {
+  width: 100%;
+}
+
+.user-wishlist-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.user-wishlist-card {
+  overflow: hidden;
+}
+
+.user-wishlist-media {
+  position: relative;
+  aspect-ratio: 16 / 11;
+  overflow: hidden;
+}
+
+.user-wishlist-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-wishlist-remove {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   border: 0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary), #1e68eb);
-  color: #ffffff;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  color: #d4483e;
+}
+
+.user-wishlist-copy {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.user-notification-row {
+  align-items: center;
+}
+
+.user-notification-row.is-unread {
+  border-left: 4px solid var(--primary);
+}
+
+.user-notification-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.user-notification-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.user-data-card {
+  display: grid;
+  gap: 14px;
+  background: #f8f9ff;
+}
+
+.user-data-note {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.user-form-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  background: #eef2ff;
+}
+
+.user-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.user-form-span-2 {
+  grid-column: 1 / -1;
+}
+
+.user-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.user-checkbox input {
+  width: auto;
+}
+
+.user-settings-grid {
+  align-items: start;
+}
+
+.user-meta-grid {
+  gap: 16px;
+}
+
+.user-meta-item {
+  padding: 22px;
+}
+
+.user-meta-item span {
+  color: var(--muted-strong);
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
-@media (max-width: 1200px) {
+.user-meta-item strong {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--primary);
+}
+
+@media (max-width: 1240px) {
   .user-summary-grid,
   .user-secondary-grid,
+  .user-tools-grid,
+  .user-settings-grid,
   .user-main-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 900px) {
+  .portal-main.user-portal-main {
+    margin-left: 0;
+  }
+
+  .portal-topbar.user-topbar {
+    left: 0;
+    padding-inline: 18px;
+  }
+
   .user-summary-grid {
-    gap: 16px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .user-booking-item {
@@ -373,33 +526,1136 @@
     height: 220px;
   }
 
-  .user-booking-copy h4 {
-    font-size: 1.5rem;
+  .user-ticket-meta-grid,
+  .user-data-list,
+  .user-form-grid,
+  .user-meta-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 720px) {
   .user-summary-grid {
     grid-template-columns: 1fr;
   }
 
+  .user-panel,
   .user-summary-card,
-  .user-notify-card,
-  .user-settings-card,
-  .user-offer-card {
-    padding: 22px;
-    border-radius: 24px;
-  }
-
-  .user-booking-item {
-    padding: 18px;
+  .user-form-card,
+  .user-ticket-card,
+  .user-notification-row,
+  .user-data-card,
+  .user-meta-item {
+    padding: 20px;
     border-radius: 24px;
   }
 
   .user-booking-top,
   .user-booking-bottom,
-  .user-suggestion-bottom {
-    align-items: start;
+  .user-data-head,
+  .user-ticket-head,
+  .user-notification-row,
+  .user-wishlist-bottom {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .user-filter-bar,
+  .status-group,
+  .inline-actions {
+    width: 100%;
+  }
+
+  .user-filter-pill {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+
+.support-messenger-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.support-sidebar-column,
+.support-chat-column,
+.support-create-card,
+.support-thread-list-shell,
+.support-chat-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.support-create-card,
+.support-thread-list-shell,
+.support-chat-shell {
+  padding: 22px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 255, 0.96));
+  border: 1px solid rgba(194, 198, 216, 0.16);
+}
+
+.support-create-head,
+.support-thread-list-head,
+.support-chat-header,
+.support-bubble-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.support-create-head {
+  display: grid;
+  gap: 6px;
+}
+
+.support-create-head p,
+.support-thread-item p,
+.support-chat-header p,
+.support-closed-note p,
+.support-bubble p {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.7;
+}
+
+.support-thread-list {
+  display: grid;
+  gap: 12px;
+  max-height: 720px;
+  overflow: auto;
+}
+
+.support-thread-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(194, 198, 216, 0.18);
+  border-radius: 22px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.support-thread-item:hover,
+.support-thread-item.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(27, 95, 225, 0.34);
+  box-shadow: 0 18px 36px rgba(25, 52, 112, 0.08);
+}
+
+.support-thread-item.is-active {
+  background: linear-gradient(180deg, rgba(233, 241, 255, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+.support-thread-main,
+.support-thread-meta,
+.support-thread-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.support-thread-main strong,
+.support-chat-header h3 {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.support-thread-main strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.support-thread-time,
+.support-thread-meta span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.support-chat-shell {
+  min-height: 100%;
+  grid-template-rows: auto minmax(340px, 1fr) auto;
+}
+
+.support-chat-header-side {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.support-chat-stream {
+  display: grid;
+  gap: 14px;
+  max-height: 720px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.support-bubble {
+  display: grid;
+  gap: 8px;
+  max-width: min(78%, 620px);
+  padding: 16px 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(194, 198, 216, 0.2);
+}
+
+.support-bubble.is-customer {
+  margin-left: auto;
+  background: linear-gradient(135deg, #1b5fe1 0%, #2f74f1 100%);
+  border-color: transparent;
+}
+
+.support-bubble.is-customer p,
+.support-bubble.is-customer .support-bubble-meta strong,
+.support-bubble.is-customer .support-bubble-meta span {
+  color: #ffffff;
+}
+
+.support-bubble.is-staff,
+.support-bubble.is-system {
+  margin-right: auto;
+}
+
+.support-bubble-meta strong,
+.support-closed-note strong,
+.support-thread-list-head strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.support-bubble-meta span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.support-chat-composer {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(244, 247, 255, 0.92);
+  border: 1px solid rgba(194, 198, 216, 0.14);
+}
+
+.support-chat-composer label {
+  display: grid;
+  gap: 10px;
+}
+
+.support-chat-composer textarea {
+  min-height: 120px;
+}
+
+.support-closed-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 241, 228, 0.98), rgba(255, 247, 239, 0.98));
+  border: 1px solid rgba(255, 170, 90, 0.28);
+}
+
+.support-closed-note .material-symbols-outlined {
+  font-size: 1.5rem;
+  color: #a85300;
+}
+
+@media (max-width: 1100px) {
+  .support-messenger-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .support-thread-list,
+  .support-chat-stream {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .support-bubble {
+    max-width: 100%;
+  }
+
+  .support-thread-main,
+  .support-chat-header,
+  .support-chat-header-side {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.user-detail-layer {
+  inset: 74px 0 0 var(--admin-sidebar-width, 268px);
+  z-index: 88;
+}
+
+.user-detail-drawer {
+  height: calc(100vh - 74px);
+  background: linear-gradient(180deg, rgba(247, 249, 255, 0.98), rgba(240, 244, 255, 0.98));
+}
+
+.user-detail-shell {
+  gap: 20px;
+}
+
+.user-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.user-detail-media-wrap {
+  display: grid;
+}
+
+.user-detail-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 28px;
+  object-fit: cover;
+}
+
+.user-detail-cover.media-placeholder {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+}
+
+.user-detail-summary-card {
+  align-content: start;
+}
+
+.user-detail-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 980px) {
+  .user-detail-layer {
+    inset: 74px 0 0 0;
+  }
+
+  .user-detail-drawer {
+    height: calc(100vh - 74px);
+  }
+
+  .user-detail-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Premium light account workspace overrides */
+body[data-account-page] .user-summary-card,
+body[data-account-page] .user-wishlist-card,
+body[data-account-page] .user-data-card,
+body[data-account-page] .user-form-card,
+body[data-account-page] .user-meta-item,
+body[data-account-page] .user-ticket-card,
+body[data-account-page] .user-notification-row,
+body[data-account-page] .user-booking-item {
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body[data-account-page] .user-summary-card {
+  min-height: 152px;
+  padding: 22px;
+  color: var(--admin-text);
+}
+
+body[data-account-page] .user-summary-card::before {
+  content: "";
+  width: 36px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.12);
+}
+
+body[data-account-page] .user-summary-card::after {
+  opacity: 0.04;
+}
+
+body[data-account-page] .user-summary-card-primary {
+  background: linear-gradient(180deg, #f7fbff, #ffffff);
+}
+
+body[data-account-page] .user-summary-card-light {
+  background: linear-gradient(180deg, #fbfcfe, #ffffff);
+}
+
+body[data-account-page] .user-summary-card-accent {
+  background: linear-gradient(180deg, #fffaf1, #ffffff);
+}
+
+body[data-account-page] .user-summary-card-primary::before { background: var(--admin-primary); }
+body[data-account-page] .user-summary-card-light::before { background: var(--admin-teal); }
+body[data-account-page] .user-summary-card-accent::before { background: #d5b171; }
+
+body[data-account-page] .user-summary-icon {
+  color: var(--admin-text-soft);
+  font-size: 2.25rem;
+}
+
+body[data-account-page] .user-summary-copy span,
+body[data-account-page] .user-overview-hero p,
+body[data-account-page] .user-sidebar-profile p,
+body[data-account-page] .user-booking-meta,
+body[data-account-page] .user-booking-facts,
+body[data-account-page] .user-notification-meta,
+body[data-account-page] .user-data-note,
+body[data-account-page] .user-ticket-meta-grid small,
+body[data-account-page] .user-notification-copy p,
+body[data-account-page] .user-ticket-card p,
+body[data-account-page] .user-meta-item p {
+  color: var(--admin-text-muted);
+}
+
+body[data-account-page] .user-summary-copy strong,
+body[data-account-page] .user-booking-bottom strong,
+body[data-account-page] .user-wishlist-bottom strong,
+body[data-account-page] .user-meta-item strong {
+  color: var(--admin-text);
+}
+
+body[data-account-page] .user-summary-copy strong {
+  font-size: 2.2rem;
+}
+
+body[data-account-page] .user-panel,
+body[data-account-page] .user-form-card,
+body[data-account-page] .user-meta-item,
+body[data-account-page] .user-ticket-card,
+body[data-account-page] .user-data-card,
+body[data-account-page] .user-notification-row,
+body[data-account-page] .user-wishlist-card,
+body[data-account-page] .user-booking-item {
+  border-radius: 22px;
+}
+
+body[data-account-page] .user-panel {
+  padding: 22px;
+}
+
+body[data-account-page] .user-filter-pill {
+  min-height: 38px;
+  padding-inline: 14px;
+  background: #ffffff;
+  color: var(--admin-text-muted);
+}
+
+body[data-account-page] .user-booking-thumb,
+body[data-account-page] .user-wishlist-image,
+body[data-account-page] .user-detail-cover {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body[data-account-page] .user-wishlist-remove {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--admin-danger);
+}
+
+body[data-account-page] .user-notification-row.is-unread {
+  border-left: 1px solid rgba(29, 111, 220, 0.16);
+  box-shadow: inset 3px 0 0 rgba(29, 111, 220, 0.82), 0 16px 32px rgba(15, 23, 42, 0.06);
+}
+
+body[data-account-page] .user-data-note {
+  border-top-color: var(--admin-border);
+}
+
+body[data-account-page] .user-form-card {
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+}
+
+body[data-account-page] .user-checkbox {
+  color: var(--admin-text-muted);
+}
+
+body[data-account-page] .support-thread-item,
+body[data-account-page] .support-bubble,
+body[data-account-page] .support-chat-composer {
+  border: 1px solid var(--admin-border);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+body[data-account-page] .support-bubble.is-customer {
+  background: linear-gradient(180deg, #edf5ff, #f7fbff);
+  border-color: rgba(29, 111, 220, 0.14);
+}
+
+body[data-account-page] .support-bubble.is-staff,
+body[data-account-page] .support-bubble.is-system {
+  background: #ffffff;
+}
+
+body[data-account-page] .support-thread-time,
+body[data-account-page] .support-thread-meta span,
+body[data-account-page] .support-bubble-meta span {
+  color: var(--admin-text-soft);
+}
+
+body[data-account-page] .support-closed-note {
+  background: #fff9ec;
+  border: 1px solid rgba(211, 139, 18, 0.14);
+}
+
+body[data-account-page] .user-detail-layer {
+  inset: 74px 0 0 var(--user-sidebar-width);
+}
+
+body[data-account-page] .user-detail-drawer {
+  height: calc(100vh - 74px);
+  background: linear-gradient(180deg, #fbfcfe, #f7f9fc);
+}
+
+body[data-account-page] .user-detail-summary-card,
+body[data-account-page] .admin-detail-card,
+body[data-account-page] .admin-detail-section {
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  body[data-account-page] .user-detail-layer {
+    inset: 74px 0 0 0;
+  }
+}
+
+/* Account admin-aligned blue workspace */
+body[data-account-page] {
+  --admin-primary: #2f6fed;
+  --admin-primary-soft: #edf3ff;
+  --admin-teal: #4f8df7;
+  --admin-teal-soft: #eef4ff;
+}
+
+body[data-account-page] .portal-main.user-portal-main {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  background: transparent;
+}
+
+body[data-account-page] .portal-sidebar.user-portal-sidebar {
+  width: var(--user-sidebar-width);
+  gap: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 10px 0 28px rgba(15, 23, 42, 0.04);
+}
+
+body[data-account-page] .admin-sidebar-brand,
+body[data-account-page] .admin-sidebar-user {
+  border-radius: 18px;
+}
+
+body[data-account-page] .admin-sidebar-brand {
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+body[data-account-page] .admin-sidebar-brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--admin-primary-soft);
+  border: 1px solid rgba(47, 111, 237, 0.12);
+  color: var(--admin-primary);
+}
+
+body[data-account-page] .admin-sidebar-user {
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  background: #ffffff;
+}
+
+body[data-account-page] .portal-side-menu a {
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: 14px;
+  color: var(--admin-text-muted);
+}
+
+body[data-account-page] .portal-side-menu a:hover {
+  background: #f5f8ff;
+  border-color: rgba(47, 111, 237, 0.1);
+  color: var(--admin-text);
+}
+
+body[data-account-page] .portal-side-menu a.is-active {
+  background: linear-gradient(180deg, #eff4ff, #e8f0ff);
+  border-color: rgba(47, 111, 237, 0.14);
+  color: var(--admin-primary);
+  box-shadow: 0 10px 18px rgba(47, 111, 237, 0.1);
+}
+
+body[data-account-page] .admin-menu-badge {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--admin-primary);
+}
+
+body[data-account-page] .portal-topbar.user-topbar {
+  position: sticky;
+  top: 0;
+  left: auto;
+  right: auto;
+  width: 100%;
+  z-index: 20;
+  min-height: 64px;
+  padding: 12px 20px;
+  background: rgba(248, 250, 252, 0.9);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+body[data-account-page] .user-portal-content {
+  width: min(100%, 1368px);
+  padding: 18px 22px 26px;
+}
+
+body[data-account-page] .admin-page-intro {
+  margin-bottom: 18px;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+body[data-account-page] .admin-page-copy {
+  display: grid;
+  gap: 6px;
+  max-width: 720px;
+}
+
+body[data-account-page] .admin-page-intro h1 {
+  font-size: clamp(1.86rem, 2.6vw, 2.32rem);
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+body[data-account-page] .admin-page-intro p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  line-height: 1.6;
+}
+
+body[data-account-page] .admin-page-actions {
+  margin-left: auto;
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-account-page] .admin-soft-pill,
+body[data-account-page] .chip {
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--admin-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+body[data-account-page] .admin-stat-card,
+body[data-account-page] .admin-quick-card,
+body[data-account-page] .admin-panel,
+body[data-account-page] .user-booking-item,
+body[data-account-page] .user-wishlist-card,
+body[data-account-page] .user-data-card,
+body[data-account-page] .user-form-card,
+body[data-account-page] .user-ticket-card,
+body[data-account-page] .user-notification-row,
+body[data-account-page] .support-thread-item,
+body[data-account-page] .support-chat-shell,
+body[data-account-page] .support-thread-list-shell,
+body[data-account-page] .support-create-card,
+body[data-account-page] .user-meta-item,
+body[data-account-page] .user-summary-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+body[data-account-page] .admin-panel,
+body[data-account-page] .user-panel {
+  border-radius: 20px;
+  padding: 18px 20px;
+  gap: 14px;
+}
+
+body[data-account-page] .admin-stat-card,
+body[data-account-page] .user-summary-card {
+  min-height: 124px;
+  padding: 18px;
+  gap: 12px;
+  border-radius: 18px;
+}
+
+body[data-account-page] .admin-stat-card::after,
+body[data-account-page] .admin-stat-card::before,
+body[data-account-page] .user-summary-card::before {
+  display: none;
+}
+
+body[data-account-page] .admin-stat-head .material-symbols-outlined,
+body[data-account-page] .admin-stat-icon,
+body[data-account-page] .user-summary-icon,
+body[data-account-page] .admin-quick-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-size: 1.3rem;
+}
+
+body[data-account-page] .admin-stat-card > span,
+body[data-account-page] .user-summary-copy span,
+body[data-account-page] .user-meta-item span {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-soft);
+}
+
+body[data-account-page] .admin-stat-card > strong,
+body[data-account-page] .user-summary-copy strong,
+body[data-account-page] .user-meta-item strong {
+  font-size: clamp(1.62rem, 2.2vw, 2rem);
+  line-height: 1.02;
+  color: var(--admin-text);
+}
+
+body[data-account-page] .admin-stat-card > p,
+body[data-account-page] .user-summary-copy p {
+  display: none;
+}
+
+body[data-account-page] .admin-quick-grid,
+body[data-account-page] .user-summary-grid,
+body[data-account-page] .user-secondary-grid,
+body[data-account-page] .user-tools-grid,
+body[data-account-page] .user-settings-grid,
+body[data-account-page] .user-main-grid,
+body[data-account-page] .admin-section-grid {
+  gap: 14px;
+}
+
+body[data-account-page] .admin-quick-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+}
+
+body[data-account-page] .admin-quick-card-top strong {
+  font-size: 1.8rem;
+}
+
+body[data-account-page] .user-booking-item {
+  gap: 18px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+body[data-account-page] .user-booking-thumb {
+  width: 108px;
+  height: 108px;
+  border-radius: 16px;
+}
+
+body[data-account-page] .user-booking-copy h4,
+body[data-account-page] .user-wishlist-copy h4,
+body[data-account-page] .user-ticket-card h4,
+body[data-account-page] .portal-section-head h2,
+body[data-account-page] .admin-panel h2,
+body[data-account-page] .admin-panel h3 {
+  font-size: clamp(1.02rem, 1.8vw, 1.24rem);
+  letter-spacing: -0.03em;
+}
+
+body[data-account-page] .user-booking-bottom strong,
+body[data-account-page] .user-wishlist-bottom strong {
+  font-size: 1rem;
+  color: var(--admin-text);
+}
+
+body[data-account-page] .user-filter-pill,
+body[data-account-page] .button,
+body[data-account-page] .user-wishlist-remove {
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  color: var(--admin-text);
+  box-shadow: none;
+}
+
+body[data-account-page] .button.button-primary,
+body[data-account-page] .user-filter-pill.is-active {
+  background: linear-gradient(180deg, #3a79f6, #2f6fed);
+  border-color: rgba(47, 111, 237, 0.16);
+  color: #ffffff;
+}
+
+body[data-account-page] .user-data-form input,
+body[data-account-page] .user-data-form textarea,
+body[data-account-page] .user-data-form select,
+body[data-account-page] .support-chat-composer textarea {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fbfcfd;
+  color: var(--admin-text);
+}
+
+body[data-account-page] .support-thread-item {
+  padding: 13px 14px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+body[data-account-page] .support-thread-item:hover,
+body[data-account-page] .support-thread-item.is-active {
+  background: #f5f8ff;
+  border-color: rgba(47, 111, 237, 0.14);
+  box-shadow: 0 8px 18px rgba(47, 111, 237, 0.08);
+}
+
+body[data-account-page] .support-bubble {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+body[data-account-page] .support-bubble.is-customer {
+  background: #eef4ff;
+  border-color: rgba(47, 111, 237, 0.12);
+}
+
+body[data-account-page] .support-chat-stream,
+body[data-account-page] .support-thread-list {
+  padding-right: 2px;
+}
+
+@media (max-width: 900px) {
+  body[data-account-page] .user-portal-content {
+    padding-inline: 16px;
+    padding-top: 14px;
+  }
+
+  body[data-account-page] .portal-topbar.user-topbar {
+    padding-inline: 16px;
+  }
+}
+
+/* Overview polish and blue scrollbars */
+body[data-account-page] .admin-quick-section {
+  display: none;
+}
+
+body[data-account-page] .user-dashboard-grid {
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: start;
+}
+
+body[data-account-page] .user-dashboard-grid-primary {
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+}
+
+body[data-account-page] .user-dashboard-grid-secondary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body[data-account-page] .user-dashboard-grid .user-panel {
+  min-height: 100%;
+}
+
+body[data-account-page] .user-dashboard-grid .portal-section-head {
+  align-items: center;
+}
+
+body[data-account-page] .user-dashboard-grid .portal-section-head h2 {
+  font-size: 1.08rem;
+}
+
+body[data-account-page] .user-dashboard-grid .text-link,
+body[data-account-page] .user-dashboard-grid .button.button-secondary {
+  white-space: nowrap;
+}
+
+body[data-account-page] .user-booking-list,
+body[data-account-page] .user-notification-list,
+body[data-account-page] .user-wishlist-grid,
+body[data-account-page] .support-thread-list {
+  gap: 12px;
+}
+
+body[data-account-page] .support-thread-list-shell,
+body[data-account-page] .support-create-card,
+body[data-account-page] .support-chat-shell {
+  border-radius: 18px;
+}
+
+body[data-account-page] .support-thread-list-head {
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body[data-account-page] .support-thread-list {
+  max-height: 420px;
+}
+
+body[data-account-page] .portal-sidebar.user-portal-sidebar,
+body[data-account-page] .admin-menu-groups {
+  scrollbar-width: none;
+}
+
+body[data-account-page] .portal-sidebar.user-portal-sidebar::-webkit-scrollbar,
+body[data-account-page] .admin-menu-groups::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body[data-account-page] .support-thread-list,
+body[data-account-page] .support-chat-stream,
+body[data-account-page] .user-detail-drawer,
+body[data-account-page] .portal-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 111, 237, 0.34) rgba(15, 23, 42, 0.04);
+}
+
+body[data-account-page] .support-thread-list::-webkit-scrollbar,
+body[data-account-page] .support-chat-stream::-webkit-scrollbar,
+body[data-account-page] .user-detail-drawer::-webkit-scrollbar,
+body[data-account-page] .portal-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body[data-account-page] .support-thread-list::-webkit-scrollbar-track,
+body[data-account-page] .support-chat-stream::-webkit-scrollbar-track,
+body[data-account-page] .user-detail-drawer::-webkit-scrollbar-track,
+body[data-account-page] .portal-content::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 999px;
+}
+
+body[data-account-page] .support-thread-list::-webkit-scrollbar-thumb,
+body[data-account-page] .support-chat-stream::-webkit-scrollbar-thumb,
+body[data-account-page] .user-detail-drawer::-webkit-scrollbar-thumb,
+body[data-account-page] .portal-content::-webkit-scrollbar-thumb {
+  background: rgba(47, 111, 237, 0.3);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+body[data-account-page] .support-thread-list::-webkit-scrollbar-thumb:hover,
+body[data-account-page] .support-chat-stream::-webkit-scrollbar-thumb:hover,
+body[data-account-page] .user-detail-drawer::-webkit-scrollbar-thumb:hover,
+body[data-account-page] .portal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(47, 111, 237, 0.5);
+}
+
+@media (max-width: 1100px) {
+  body[data-account-page] .user-dashboard-grid-primary,
+  body[data-account-page] .user-dashboard-grid-secondary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* User detail drawer polish */
+body[data-account-page] .user-detail-drawer {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+}
+
+body[data-account-page] .admin-detail-hero-shell {
+  border-color: rgba(29, 111, 220, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 246, 255, 0.98));
+}
+
+body[data-account-page] .admin-detail-fact {
+  background: linear-gradient(180deg, #fbfdff 0%, #eef5ff 100%);
+  border-color: rgba(29, 111, 220, 0.1);
+}
+
+body[data-account-page] .admin-detail-cover {
+  box-shadow: 0 18px 34px rgba(29, 111, 220, 0.18);
+}
+
+/* User dashboard cleanup */
+body[data-account-page] .user-dashboard-stack {
+  display: grid;
+  gap: 16px;
+}
+
+body[data-account-page] .user-booking-table-wrap {
+  display: grid;
+}
+
+body[data-account-page] .user-booking-table {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-account-page] .user-booking-table-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.3fr) repeat(3, minmax(120px, 0.55fr)) minmax(160px, 0.7fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: #ffffff;
+}
+
+body[data-account-page] .user-booking-table-tour {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+body[data-account-page] .user-booking-table-thumb {
+  width: 88px;
+  height: 88px;
+  border-radius: 16px;
+  object-fit: cover;
+  flex: none;
+}
+
+body[data-account-page] .user-booking-table-tour strong,
+body[data-account-page] .user-booking-table-col strong {
+  display: block;
+  color: var(--admin-text);
+}
+
+body[data-account-page] .user-booking-table-tour strong {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+body[data-account-page] .user-booking-table-tour span,
+body[data-account-page] .user-booking-table-col small {
+  color: var(--admin-text-muted);
+}
+
+body[data-account-page] .user-booking-table-col {
+  display: grid;
+  gap: 4px;
+}
+
+body[data-account-page] .user-booking-table-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body[data-account-page] .user-booking-table-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+body[data-account-page] .user-wishlist-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+body[data-account-page] .user-wishlist-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+
+body[data-account-page] .user-wishlist-copy {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto minmax(72px, 1fr) auto;
+  align-content: start;
+}
+
+body[data-account-page] .user-wishlist-copy h4 {
+  min-height: 3.1em;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body[data-account-page] .user-wishlist-copy p {
+  min-height: 5.2em;
+  margin: 0;
+  color: var(--admin-text-muted);
+  line-height: 1.72;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body[data-account-page] .user-wishlist-bottom {
+  margin-top: auto;
+  align-items: end;
+}
+
+body[data-account-page] .user-wishlist-bottom .inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+body[data-account-page] .user-filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding-block: 4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.94));
+}
+
+@media (max-width: 1200px) {
+  body[data-account-page] .user-booking-table-row {
+    grid-template-columns: minmax(0, 1fr) repeat(2, minmax(120px, 1fr));
+  }
+
+  body[data-account-page] .user-booking-table-status,
+  body[data-account-page] .user-booking-table-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-account-page] .user-booking-table-row {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-account-page] .user-booking-table-tour,
+  body[data-account-page] .user-booking-table-actions {
+    justify-content: flex-start;
+  }
+
+  body[data-account-page] .user-wishlist-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body[data-account-page] .user-wishlist-bottom .inline-actions {
+    justify-content: stretch;
   }
 }

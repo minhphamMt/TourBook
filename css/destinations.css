@@ -1,3 +1,120 @@
-﻿.destination-card {
+﻿.destination-page-stack {
+  display: grid;
+  gap: 28px;
+}
+
+.destination-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.destination-highlight-card,
+.destination-region-section {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 28px;
+  background: rgba(246, 247, 255, 0.88);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.destination-highlight-card {
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+}
+
+.destination-highlight-card span,
+.destination-region-meta span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.destination-highlight-card strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.destination-highlight-card p,
+.destination-region-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.destination-region-section {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+}
+
+.destination-region-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.destination-region-head h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.destination-region-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.destination-region-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(22, 88, 218, 0.08);
+  color: var(--primary);
+}
+
+.destination-region-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.destination-card {
   height: 100%;
+}
+
+.destination-card .tour-price-stack strong {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 1120px) {
+  .destination-highlight-grid,
+  .destination-region-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .destination-highlight-grid,
+  .destination-region-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .destination-region-head {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .destination-region-section,
+  .destination-highlight-card {
+    padding: 22px;
+  }
 }

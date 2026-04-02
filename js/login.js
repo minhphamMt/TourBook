@@ -1,5 +1,5 @@
 ﻿import { getAuthContext, resolvePostLoginPath, signIn, signUp } from "./api.js";
-import { bindAsyncForm, mountLayout, qs, showToast } from "./shared.js";
+import { bindAsyncForm, mountLayout, qs, showToast } from "./shared.js?v=20260331m";
 
 async function init() {
   await mountLayout("login");

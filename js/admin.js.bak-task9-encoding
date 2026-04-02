@@ -1,0 +1,1777 @@
+import { formatCurrency, formatDateTime, formatShortDate, getAdminDashboard, moderateReview, processRefund, recordManualPayment, reviewCancellation, signOut, updateBookingInternalNote } from "./api.js";
+import { escapeHtml, guardPage, qs, renderMediaFrame, setLoading, showToast } from "./shared.js";
+import { routePath } from "./routes.js";
+
+const ROLE_PERMISSION_MAP = {
+  staff: [
+    "tour.read",
+    "tour.write",
+    "schedule.read",
+    "schedule.write",
+    "booking.read_all",
+    "booking.manage",
+    "payment.read_all",
+    "payment.manage",
+    "review.moderate",
+    "user.read_all",
+    "coupon.manage",
+    "report.read",
+    "ticket.manage"
+  ],
+  admin: [
+    "tour.read",
+    "tour.write",
+    "schedule.read",
+    "schedule.write",
+    "booking.read_all",
+    "booking.manage",
+    "payment.read_all",
+    "payment.manage",
+    "review.moderate",
+    "user.read_all",
+    "coupon.manage",
+    "report.read",
+    "ticket.manage",
+    "user.manage",
+    "banner.manage",
+    "settings.manage"
+  ],
+  super_admin: [
+    "tour.read",
+    "tour.write",
+    "schedule.read",
+    "schedule.write",
+    "booking.read_all",
+    "booking.manage",
+    "payment.read_all",
+    "payment.manage",
+    "review.moderate",
+    "user.read_all",
+    "coupon.manage",
+    "report.read",
+    "ticket.manage",
+    "user.manage",
+    "banner.manage",
+    "settings.manage"
+  ]
+};
+
+const PAGE_DEFINITIONS = {
+  dashboard: {
+    routeKey: "admin",
+    group: "Äiá»u hÆ°á»ng",
+    icon: "dashboard",
+    label: "Tá»ng quan",
+    title: "Tá»ng quan",
+    description: "Theo dÃµi booking, giao dá»ch vÃ  há» trá»£ tá»« dá»¯ liá»u tháº­t.",
+    searchPlaceholder: "TÃ¬m booking, khÃ¡ch, tour..."
+  },
+  users: {
+    routeKey: "admin-users",
+    group: "Váº­n hÃ nh",
+    icon: "group",
+    label: "NgÆ°á»i dÃ¹ng",
+    permission: "user.manage",
+    title: "NgÆ°á»i dÃ¹ng",
+    description: "Quáº£n lÃ½ há» sÆ¡, vai trÃ² vÃ  quyá»n truy cáº­p há» thá»ng.",
+    searchPlaceholder: "TÃ¬m ngÆ°á»i dÃ¹ng, email, vai trÃ²..."
+  },
+  bookings: {
+    routeKey: "admin-bookings",
+    group: "Váº­n hÃ nh",
+    icon: "assignment",
+    label: "Äáº·t tour",
+    permission: "booking.read_all",
+    title: "Äáº·t tour",
+    description: "Theo dÃµi ÄÆ¡n Äáº·t tour vÃ  vÃ²ng Äá»i booking tháº­t.",
+    searchPlaceholder: "TÃ¬m booking, khÃ¡ch, tour..."
+  },
+  payments: {
+    routeKey: "admin-payments",
+    group: "Váº­n hÃ nh",
+    icon: "payments",
+    label: "Giao dá»ch",
+    permission: "payment.read_all",
+    title: "Giao dá»ch",
+    description: "Theo dÃµi thanh toÃ¡n, hoÃ n tiá»n vÃ  phÆ°Æ¡ng thá»©c Äang báº­t.",
+    searchPlaceholder: "TÃ¬m giao dá»ch, booking, phÆ°Æ¡ng thá»©c..."
+  },
+  tours: {
+    routeKey: "admin-tours",
+    group: "Váº­n hÃ nh",
+    icon: "travel_explore",
+    label: "Tour & lịch",
+    permission: "tour.read",
+    title: "Tour và lịch khởi hành",
+    description: "Quáº£n lÃ½ tour, lá»ch khá»i hÃ nh vÃ  chá» cÃ²n láº¡i.",
+    searchPlaceholder: "TÃ¬m tour, lá»ch, Äiá»m Äáº¿n..."
+  },
+  promotions: {
+    routeKey: "admin-promotions",
+    group: "Váº­n hÃ nh",
+    icon: "sell",
+    label: "Khuyáº¿n mÃ£i",
+    permission: "coupon.manage",
+    title: "Khuyáº¿n mÃ£i",
+    description: "Theo dÃµi coupon, usage vÃ  hiá»u quáº£ giáº£m giÃ¡.",
+    searchPlaceholder: "TÃ¬m coupon, booking, usage..."
+  },
+  content: {
+    routeKey: "admin-content",
+    group: "Váº­n hÃ nh",
+    icon: "campaign",
+    label: "Ná»i dung",
+    permission: "banner.manage",
+    title: "Ná»i dung",
+    description: "Quáº£n lÃ½ banner vÃ  CMS Äang cháº¡y trÃªn website.",
+    searchPlaceholder: "TÃ¬m banner, trang, slug..."
+  },
+  service: {
+    routeKey: "admin-service",
+    group: "Váº­n hÃ nh",
+    icon: "support_agent",
+    label: "Há» trá»£ & review",
+    permission: "ticket.manage",
+    title: "Há» trá»£ vÃ  review",
+    description: "Xá»­ lÃ½ ticket, review backlog vÃ  pháº£n há»i khÃ¡ch hÃ ng.",
+    searchPlaceholder: "TÃ¬m ticket, review, khÃ¡ch..."
+  },
+  customers: {
+    routeKey: "admin-customers",
+    group: "Váº­n hÃ nh",
+    icon: "groups_2",
+    label: "KhÃ¡ch hÃ ng",
+    permission: "user.read_all",
+    title: "KhÃ¡ch hÃ ng",
+    description: "Xem lá»ch sá»­ Äáº·t tour, chi tiÃªu vÃ  má»©c Äá» quay láº¡i.",
+    searchPlaceholder: "TÃ¬m khÃ¡ch, email, booking..."
+  },
+  settings: {
+    routeKey: "admin-settings",
+    group: "Há» thá»ng",
+    icon: "settings",
+    label: "CÃ i Äáº·t",
+    permission: "settings.manage",
+    title: "CÃ i Äáº·t",
+    description: "Kiá»m tra cáº¥u hÃ¬nh há» thá»ng, payment methods vÃ  role model.",
+    searchPlaceholder: "TÃ¬m setting key, payment method..."
+  },
+  reports: {
+    routeKey: "admin-reports",
+    group: "Há» thá»ng",
+    icon: "monitoring",
+    label: "Báo cáo",
+    permission: "report.read",
+    title: "Báo cáo vận hành",
+    description: "Xem doanh thu, hoàn tiền và mix booking theo vùng.",
+    searchPlaceholder: "TÃ¬m log, tour, booking..."
+  }
+};
+
+const PAGE_ORDER = ["dashboard", "users", "bookings", "payments", "tours", "promotions", "content", "service", "customers", "settings", "reports"];
+
+function formatStatus(status) {
+  const map = {
+    pending: "Chá» xá»­ lÃ½",
+    awaiting_payment: "Chá» thanh toÃ¡n",
+    confirmed: "ÄÃ£ xÃ¡c nháº­n",
+    completed: "HoÃ n táº¥t",
+    cancel_requested: "Chá» duyá»t há»§y",
+    cancelled: "ÄÃ£ há»§y",
+    unpaid: "ChÆ°a thanh toÃ¡n",
+    partially_paid: "Äáº·t cá»c",
+    paid: "ÄÃ£ thanh toÃ¡n",
+    failed: "Lá»i thanh toÃ¡n",
+    authorized: "ÄÃ£ giá»¯ tiá»n",
+    expired: "Háº¿t háº¡n",
+    refunded: "ÄÃ£ hoÃ n tiá»n",
+    partially_refunded: "HoÃ n tiá»n má»t pháº§n",
+    open: "Äang má»",
+    sold_out: "Háº¿t chá»",
+    closed: "ÄÃ£ ÄÃ³ng",
+    hidden: "ÄÃ£ áº©n",
+    approved: "ÄÃ£ duyá»t",
+    in_progress: "Äang xá»­ lÃ½",
+    resolved: "?? x? l?"
+  };
+  return map[status] || String(status || "KhÃ´ng rÃµ");
+}
+
+function getCurrentPageKey() {
+  return document.body.dataset.managementPage || "dashboard";
+}
+
+function getPermissionSet(role) {
+  return new Set(ROLE_PERMISSION_MAP[role] || []);
+}
+
+function canAccessPage(role, pageKey) {
+  const page = PAGE_DEFINITIONS[pageKey];
+  if (!page) return false;
+  if (!page.permission) return true;
+  return getPermissionSet(role).has(page.permission);
+}
+
+functiconst ADMIN_TEXT_REPLACEMENTS = [];
+i DB cÃ³ dá»¯ liá»u.", "Trang CMS sẽ hiện ở đây khi DB có dữ liệu."],
+  ["Tá»ng quan ná»i dung", "Tổng quan nội dung"],
+  ["Xem nhanh banner, coupon vÃ  CMS.", "Xem nhanh banner, coupon và CMS."],
+  ["Banner Äang báº­t", "Banner đang bật"],
+  ["Nguá»n dá»¯ liá»u", "Nguồn dữ liệu"],
+  ["Cáº¥u hÃ¬nh há» thá»ng", "Cấu hình hệ thống"],
+  ["PhÆ°Æ¡ng thá»©c thanh toÃ¡n", "Phương thức thanh toán"],
+  ["MÃ´ hÃ¬nh vai trÃ²", "Mô hình vai trò"],
+  ["Äá»c trá»±c tiáº¿p tá»« DB", "Đọc trực tiếp từ DB"],
+  ["Snapshot key/value há» thá»ng", "Snapshot key/value hệ thống"],
+  ["ChÆ°a cÃ³ cáº¥u hÃ¬nh", "Chưa có cấu hình"],
+  ["Cáº¥u hÃ¬nh váº­n hÃ nh nhanh cho admin.", "Cấu hình vận hành nhanh cho admin."],
+  ["Tour Äang hiá»n thá»", "Tour đang hiển thị"],
+  ["Lá»ch Äang má»", "Lịch đang mở"],
+  ["Háº¿t chá»", "Hết chỗ"],
+  ["Tá»ng giáº£m ÄÃ£ Ã¡p dá»¥ng", "Tổng giảm đã áp dụng"],
+  ["TÃ­nh tá»« khÃ¡ch gáº§n ÄÃ¢y", "Tính từ khách gần đây"],
+  ["ToÃ n bá» ÄÆ¡n hiá»n táº¡i", "Toàn bộ đơn hiện tại"],
+  ["Tá»« profiles", "Từ profiles"],
+  ["Tá»« public.refunds", "Từ public.refunds"],
+  ["Tá»« coupon_usages", "Từ coupon_usages"],
+  ["Tá»« public.bookings", "Từ public.bookings"],
+  ["Tá»« public.invoices", "Từ public.invoices"],
+  ["Tá»« public.system_settings", "Từ public.system_settings"],
+  ["Äá»c tá»« public.coupons", "Đọc từ public.coupons"],
+  ["Chá» xá»­ lÃ½", "Chờ xử lý"],
+  ["Chá» thanh toÃ¡n", "Chờ thanh toán"],
+  ["ÄÃ£ xÃ¡c nháº­n", "Đã xác nhận"],
+  ["HoÃ n táº¥t", "Hoàn tất"],
+  ["Chá» duyá»t há»§y", "Chờ duyệt hủy"],
+  ["ÄÃ£ há»§y", "Đã hủy"],
+  ["ChÆ°a thanh toÃ¡n", "Chưa thanh toán"],
+  ["Äáº·t cá»c", "Đặt cọc"],
+  ["ÄÃ£ thanh toÃ¡n", "Đã thanh toán"],
+  ["Lá»i thanh toÃ¡n", "Lỗi thanh toán"],
+  ["ÄÃ£ giá»¯ tiá»n", "Đã giữ tiền"],
+  ["Háº¿t háº¡n", "Hết hạn"],
+  ["ÄÃ£ hoÃ n tiá»n", "Đã hoàn tiền"],
+  ["HoÃ n tiá»n má»t pháº§n", "Hoàn tiền một phần"],
+  ["Äang má»", "Đang mở"],
+  ["Háº¿t chá»", "Hết chỗ"],
+  ["ÄÃ£ ÄÃ³ng", "Đã đóng"],
+  ["ÄÃ£ áº©n", "Đã ẩn"],
+  ["ÄÃ£ duyá»t", "Đã duyệt"],
+  ["Äang xá»­ lÃ½", "Đang xử lý"],
+  ["KhÃ´ng rÃµ", "Không rõ"]
+].sort((left, right) => right[0].length - left[0].length);
+
+function normalizeAdminText(value) {
+  if (value == null) return "";
+  let result = String(value);
+  ADMIN_TEXT_REPLACEMENTS.forEach(([from, to]) => {
+    result = result.split(from).join(to);
+  });
+  return result;
+}
+
+function normalizeAdminCopy(html) {
+  return normalizeAdminText(html);
+}
+
+["group", "label", "title", "description", "searchPlaceholder"].forEach((field) => {
+  Object.values(PAGE_DEFINITIONS).forEach((page) => {
+    if (typeof page[field] === "string") {
+      page[field] = normalizeAdminText(page[field]);
+    }
+  });
+});
+
+const MANAGEMENT_RUNTIME = {
+  auth: null,
+  data: null,
+  currentPage: "dashboard",
+  detail: null,
+  filters: {
+    bookings: { bookingStatus: "all", paymentStatus: "all", cancellation: "all" },
+    payments: { status: "all", refundStatus: "all", provider: "all" },
+    customers: { segment: "all" }
+  }
+};
+
+function getRuntimeFilters(pageKey) {
+  if (!MANAGEMENT_RUNTIME.filters[pageKey]) {
+    MANAGEMENT_RUNTIME.filters[pageKey] = {};
+  }
+  return MANAGEMENT_RUNTIME.filters[pageKey];
+}
+
+function getInitials(name) {
+  return String(name || "TH")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "TH";
+}
+
+function renderAvatar(profile, user, className = "portal-avatar") {
+  const avatarUrl = profile?.avatar_url;
+  const name = profile?.full_name || user?.email || "The Horizon";
+  return avatarUrl
+    ? `<img class="${className}" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name)}" />`
+    : `<div class="${className} portal-avatar-fallback">${escapeHtml(getInitials(name))}</div>`;
+}
+
+function getBookingTone(booking) {
+  if (booking.booking_status === "cancelled") return { label: "ÄÃ£ há»§y", tone: "danger" };
+  if (booking.booking_status === "completed") return { label: "HoÃ n táº¥t", tone: "success" };
+  if (booking.booking_status === "cancel_requested") return { label: "Chá» duyá»t há»§y", tone: "danger" };
+  if (booking.booking_status === "expired") return { label: "Háº¿t háº¡n", tone: "danger" };
+  if (["confirmed"].includes(booking.booking_status) || ["paid", "partially_paid"].includes(booking.payment_status)) {
+    return { label: "ÄÃ£ xÃ¡c nháº­n", tone: "success" };
+  }
+  return { label: "Chá» xá»­ lÃ½", tone: "waiting" };
+}
+
+function getPaymentTone(payment) {
+  if (payment.status === "paid") return { label: "ÄÃ£ thanh toÃ¡n", tone: "success" };
+  if (["refunded", "partially_refunded"].includes(payment.status)) return { label: formatStatus(payment.status), tone: "danger" };
+  if (["failed", "cancelled", "expired"].includes(payment.status)) return { label: formatStatus(payment.status), tone: "danger" };
+  if (payment.status === "authorized") return { label: "ÄÃ£ giá»¯ tiá»n", tone: "info" };
+  return { label: "Chá» xá»­ lÃ½", tone: "waiting" };
+}
+
+function getReviewTone(review) {
+  if (review.status === "approved") return { label: "ÄÃ£ duyá»t", tone: "success" };
+  if (review.status === "hidden") return { label: "ÄÃ£ áº©n", tone: "danger" };
+  return { label: formatStatus(review.status), tone: "waiting" };
+}
+
+function getTicketTone(ticket) {
+  if (ticket.status === "resolved") return { label: "?? x? l?", tone: "success" };
+  if (ticket.status === "closed") return { label: "ÄÃ£ ÄÃ³ng", tone: "danger" };
+  return { label: formatStatus(ticket.status), tone: "waiting" };
+}
+
+function renderStatusTag(label, tone = "waiting") {
+  return `<span class="admin-status-chip is-${escapeHtml(tone)}">${escapeHtml(label)}</span>`;
+}
+
+function renderStatCard({ icon, chip = "", chipTone = "success", label, value, hint, cardTone = "neutral" }) {
+  return `
+    <article class="admin-stat-card is-${escapeHtml(cardTone)}">
+      <div class="admin-stat-head">
+        <span class="material-symbols-outlined admin-stat-icon is-${escapeHtml(cardTone)}">${icon}</span>
+        ${chip ? `<em class="${chipTone !== "success" ? `is-${chipTone}` : ""}">${escapeHtml(chip)}</em>` : ""}
+      </div>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <p>${escapeHtml(hint)}</p>
+    </article>
+  `;
+}
+
+const WEEKDAY_LABELS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+function toLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getAdminDateLabel(date = new Date()) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(date);
+}
+
+function buildRecentDaySeries(items = [], resolveDate, resolveValue = () => 1) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const series = [];
+
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - offset);
+    series.push({
+      key: toLocalDateKey(date),
+      label: WEEKDAY_LABELS[date.getDay()],
+      value: 0
+    });
+  }
+
+  const indexMap = new Map(series.map((item, index) => [item.key, index]));
+  items.forEach((item) => {
+    const rawDate = resolveDate(item);
+    if (!rawDate) return;
+    const date = new Date(rawDate);
+    if (Number.isNaN(date.getTime())) return;
+    const key = toLocalDateKey(date);
+    const targetIndex = indexMap.get(key);
+    if (targetIndex == null) return;
+    series[targetIndex].value += Number(resolveValue(item) || 0);
+  });
+
+  const max = Math.max(0, ...series.map((item) => item.value));
+  return series.map((item, index) => ({
+    ...item,
+    height: max ? Math.max(18, Math.round((item.value / max) * 100)) : 0,
+    isActive: index === series.length - 1
+  }));
+}
+
+function renderChartPanel({ title, description, totalLabel, totalValue, series, tone = "blue", emptyTitle, emptyDescription }) {
+  const hasData = series.some((item) => item.value > 0);
+  return `
+    <article class="admin-panel admin-chart-panel admin-chart-panel-${escapeHtml(tone)}">
+      <div class="portal-section-head admin-chart-head">
+        <div>
+          <h2>${escapeHtml(title)}</h2>
+          <p>${escapeHtml(description)}</p>
+        </div>
+        <div class="admin-chart-summary">
+          <span>${escapeHtml(totalLabel)}</span>
+          <strong>${escapeHtml(totalValue)}</strong>
+        </div>
+      </div>
+      ${hasData
+        ? `<div class="admin-bar-chart admin-bar-chart-weekly">${series
+            .map(
+              (item) => `<div class="admin-bar-col"><div class="admin-bar-fill is-${escapeHtml(tone)} ${item.isActive ? "is-active" : ""}" style="height:${item.height}%"></div><span>${escapeHtml(item.label)}</span><small>${escapeHtml(String(item.value))}</small></div>`
+            )
+            .join("")}</div>`
+        : `<div class="empty-state"><h3>${escapeHtml(emptyTitle || "Chua có d? li?u")}</h3><p>${escapeHtml(emptyDescription || description)}</p></div>`}
+    </article>
+  `;
+}
+
+function getBacklogCount(stats) {
+  return stats.pendingBookings.length + stats.pendingPayments.length + stats.pendingReviews.length + stats.unresolvedTickets.length;
+}
+
+function getDashboardAction(stats) {
+  const reviewAndTicketCount = stats.pendingReviews.length + stats.unresolvedTickets.length;
+  if (reviewAndTicketCount > 0) {
+    return {
+      routeKey: "admin-service",
+      icon: "schedule",
+      label: `${reviewAndTicketCount} má»¥c chá» xá»­ lÃ½`
+    };
+  }
+
+  if (stats.pendingPayments.length > 0) {
+    return {
+      routeKey: "admin-payments",
+      icon: "payments",
+      label: `${stats.pendingPayments.length} giao dá»ch cáº§n xá»­ lÃ½`
+    };
+  }
+
+  if (stats.pendingBookings.length > 0) {
+    return {
+      routeKey: "admin-bookings",
+      icon: "assignment",
+      label: `${stats.pendingBookings.length} booking Äang chá»`
+    };
+  }
+
+  return {
+    routeKey: "admin",
+    icon: "task_alt",
+    label: "KhÃ´ng cÃ³ backlog"
+  };
+}
+
+function getQuickAccessMetric(pageKey, data, stats) {
+  const map = {
+    bookings: { value: stats.pendingBookings.length, hint: "Äang chá» xá»­ lÃ½" },
+    users: { value: stats.totalUsers, hint: "Há» sÆ¡ Äang cÃ³" },
+    payments: { value: stats.pendingPayments.length, hint: "Cáº§n Äá»i soÃ¡t" },
+    tours: { value: stats.activeSchedules.length, hint: "Lá»ch Äang má»" },
+    promotions: { value: stats.activeCoupons.length, hint: "MÃ£ Äang cháº¡y" },
+    content: { value: data.cmsPages.length + stats.activeBanners.length, hint: "Banner vÃ  CMS" },
+    service: { value: stats.pendingReviews.length + stats.unresolvedTickets.length, hint: "Ticket vÃ  review" },
+    customers: { value: stats.customerCount, hint: "KhÃ¡ch cÃ³ giao dá»ch" },
+    settings: { value: data.systemSettings.length, hint: "Cáº¥u hÃ¬nh hiá»n cÃ³" },
+    reports: { value: getBacklogCount(stats), hint: "Tá»ng backlog" }
+  };
+  return map[pageKey] || { value: 0, hint: "Dá»¯ liá»u há» thá»ng" };
+}
+
+function buildQuickAccessItems(auth, data, stats) {
+  const candidates = ["bookings", "users", "tours", "promotions", "settings", "service", "customers", "payments", "content", "reports"];
+  return candidates
+    .filter((pageKey) => canAccessPage(auth.primaryRole, pageKey))
+    .slice(0, 5)
+    .map((pageKey) => {
+      const page = PAGE_DEFINITIONS[pageKey];
+      const metric = getQuickAccessMetric(pageKey, data, stats);
+      return {
+        pageKey,
+        routeKey: page.routeKey,
+        icon: page.icon,
+        title: page.label,
+        hint: metric.hint,
+        value: metric.value
+      };
+    });
+}
+
+function renderQuickAccessGrid(items = []) {
+  if (!items.length) return "";
+  return `
+    <section class="admin-quick-section">
+      <div class="portal-section-head">
+        <div>
+          <h2>Truy cáº­p nhanh</h2>
+          <p>Äi vÃ o tá»«ng module váº­n hÃ nh báº±ng dá»¯ liá»u thá»±c táº¿.</p>
+        </div>
+      </div>
+      <div class="admin-quick-grid">
+        ${items
+          .map(
+            (item) => `
+              <a class="admin-quick-card" href="${routePath(item.routeKey)}" data-search="${escapeHtml(item.title)}">
+                <div class="admin-quick-card-top">
+                  <span class="material-symbols-outlined admin-quick-icon">${item.icon}</span>
+                  <strong>${escapeHtml(String(item.value))}</strong>
+                </div>
+                <div class="admin-quick-card-copy">
+                  <h3>${escapeHtml(item.title)}</h3>
+                  <p>${escapeHtml(item.hint)}</p>
+                </div>
+              </a>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function groupMonthlyRevenue(payments) {
+  const labels = ["T1", "T2", "T3", "T4", "T5", "T6"];
+  const grouped = new Map(labels.map((label) => [label, 0]));
+  payments.forEach((payment) => {
+    if (!["paid", "refunded"].includes(payment.status)) return;
+    const date = payment.paid_at || payment.created_at || payment.requested_at;
+    if (!date) return;
+    const month = `T${new Date(date).getMonth() + 1}`;
+    grouped.set(month, (grouped.get(month) || 0) + Number(payment.amount || 0));
+  });
+  const values = labels.map((label) => grouped.get(label) || 0);
+  const max = Math.max(...values, 1);
+  return labels.map((label, index) => ({ label, height: Math.max(18, Math.round((values[index] / max) * 100)) }));
+}
+
+function mapRegion(destinationLabel) {
+  const value = String(destinationLabel || "").toLowerCase();
+  if (/(ha long|ha noi|sapa|sa pa|ninh binh|quang ninh)/.test(value)) return "North";
+  if (/(da nang|hoi an|hue|nha trang|quy nhon)/.test(value)) return "Central";
+  return "South";
+}
+
+function getRegionBreakdown(bookings) {
+  const counts = new Map([["North", 0], ["Central", 0], ["South", 0]]);
+  bookings.forEach((booking) => {
+    const region = mapRegion(booking.tour?.destinationLabel || booking.snapshot_jsonb?.tour_name || "");
+    counts.set(region, (counts.get(region) || 0) + 1);
+  });
+  const total = Array.from(counts.values()).reduce((sum, value) => sum + value, 0) || 1;
+  return Array.from(counts.entries()).map(([label, value]) => ({ label, percent: Math.round((value / total) * 100) }));
+}
+function getTopTours(bookings, tours = []) {
+  const groups = new Map();
+  bookings.forEach((booking) => {
+    const key = booking.tour?.id || booking.tour_id || booking.snapshot_jsonb?.tour_name;
+    if (!key) return;
+    const current = groups.get(key) || {
+      name: booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour",
+      image: booking.tour?.coverImage || null,
+      price: booking.tour?.startingPrice || booking.total_amount || 0,
+      currency: booking.currency || booking.tour?.baseCurrency || "VND",
+      rating: booking.tour?.ratingAverage || Number(booking.review?.rating || 0),
+      bookings: 0,
+      destinationLabel: booking.tour?.destinationLabel || "Äang cáº­p nháº­t"
+    };
+    current.bookings += 1;
+    groups.set(key, current);
+  });
+  const ranked = Array.from(groups.values()).sort((left, right) => right.bookings - left.bookings);
+  if (ranked.length) return ranked.slice(0, 4);
+  return [];
+}
+
+function getManagementStats(data) {
+  const bookings = Array.isArray(data?.bookings) ? data.bookings : [];
+  const payments = Array.isArray(data?.payments) ? data.payments : [];
+  const refunds = Array.isArray(data?.refunds) ? data.refunds : [];
+  const tickets = Array.isArray(data?.tickets) ? data.tickets : [];
+  const reviews = Array.isArray(data?.reviews) ? data.reviews : [];
+  const schedules = Array.isArray(data?.schedules) ? data.schedules : [];
+  const coupons = Array.isArray(data?.coupons) ? data.coupons : [];
+  const banners = Array.isArray(data?.banners) ? data.banners : [];
+  const cmsPages = Array.isArray(data?.cmsPages) ? data.cmsPages : [];
+  const couponUsages = Array.isArray(data?.couponUsages) ? data.couponUsages : [];
+  const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+  const bookingCounts = new Map();
+
+  bookings.forEach((booking) => {
+    const key = booking.user_id || booking.contact_email || booking.contact_name || booking.booking_code;
+    bookingCounts.set(key, (bookingCounts.get(key) || 0) + 1);
+  });
+
+  const customerGroups = new Map();
+  bookings.forEach((booking) => {
+    const key = booking.user_id || booking.contact_email || booking.contact_name || booking.booking_code;
+    const current = customerGroups.get(key) || {
+      id: key,
+      name: booking.contact_name || "KhÃ¡ch hÃ ng",
+      email: booking.contact_email || "",
+      bookings: 0,
+      spend: 0,
+      latestAt: booking.created_at || new Date().toISOString()
+    };
+    current.bookings += 1;
+    current.spend += Number(booking.total_amount || 0);
+    current.latestAt = String(current.latestAt) > String(booking.created_at || "") ? current.latestAt : booking.created_at;
+    customerGroups.set(key, current);
+  });
+
+  const roleCounts = profiles.reduce((accumulator, profile) => {
+    const role = profile.primaryRole || "customer";
+    accumulator[role] = (accumulator[role] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  return {
+    totalBookings: bookings.length,
+    pendingBookings: bookings.filter((booking) => ["pending", "awaiting_payment", "cancel_requested"].includes(booking.booking_status)),
+    pendingPayments: payments.filter((payment) => !["paid", "refunded"].includes(payment.status)),
+    collectedRevenue: payments.filter((payment) => payment.status === "paid").reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+    refundAmount: refunds.reduce((sum, refund) => sum + Number(refund.amount || 0), 0),
+    unresolvedTickets: tickets.filter((ticket) => ["open", "in_progress"].includes(ticket.status)),
+    pendingReviews: reviews.filter((review) => review.status !== "approved"),
+    activeSchedules: schedules.filter((schedule) => ["draft", "open", "sold_out"].includes(schedule.status)),
+    soldOutSchedules: schedules.filter((schedule) => schedule.status === "sold_out"),
+    activeCoupons: coupons.filter((coupon) => coupon.isActive),
+    activeBanners: banners.filter((banner) => Boolean(banner.is_active ?? banner.isActive)),
+    publishedPages: cmsPages.filter((page) => Boolean(page.isPublished || page.is_published || page.publishedAt)),
+    totalCouponUsage: couponUsages.length,
+    totalUsers: profiles.length,
+    customerCount: profiles.filter((profile) => profile.primaryRole === "customer").length,
+    repeatCustomers: Array.from(bookingCounts.values()).filter((value) => value > 1).length,
+    roleCounts,
+    recentCustomers: Array.from(customerGroups.values()).sort((left, right) => String(right.latestAt).localeCompare(String(left.latestAt))).slice(0, 8)
+  };
+}
+
+function getPageBadge(pageKey, stats) {
+  const mapping = {
+    reports: String(stats.pendingPayments.length),
+    bookings: String(stats.pendingBookings.length),
+    payments: String(stats.pendingPayments.length),
+    tours: String(stats.activeSchedules.length),
+    service: String(stats.unresolvedTickets.length + stats.pendingReviews.length),
+    customers: String(stats.customerCount),
+    promotions: String(stats.activeCoupons.length),
+    users: String(stats.totalUsers),
+    content: String(stats.activeBanners.length + stats.publishedPages.length),
+    settings: String(stats.activeBanners.length + 1)
+  };
+  return mapping[pageKey] || "";
+}
+
+function buildMenuGroups(role, stats) {
+  const pages = getAccessiblePages(role).sort((left, right) => {
+    const leftIndex = PAGE_ORDER.indexOf(left);
+    const rightIndex = PAGE_ORDER.indexOf(right);
+    return (leftIndex === -1 ? 999 : leftIndex) - (rightIndex === -1 ? 999 : rightIndex);
+  });
+  const groups = new Map();
+  pages.forEach((pageKey) => {
+    const page = PAGE_DEFINITIONS[pageKey];
+    if (!groups.has(page.group)) groups.set(page.group, []);
+    groups.get(page.group).push({ pageKey, ...page, badge: getPageBadge(pageKey, stats) });
+  });
+  return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+}
+
+function buildRoleHighlights(role) {
+  return getAccessiblePages(role)
+    .filter((pageKey) => pageKey !== "dashboard")
+    .slice(0, 4)
+    .map((pageKey) => {
+      const page = PAGE_DEFINITIONS[pageKey];
+      return {
+        icon: page.icon,
+        title: page.label,
+        description: page.description,
+        code: page.permission || "management"
+      };
+    });
+}
+
+function renderMenuGroups(groups, currentPage) {
+  return groups.map((group) => `
+    <section class="admin-menu-group">
+      <span class="admin-menu-label">${escapeHtml(group.label)}</span>
+      <nav class="portal-side-menu">
+        ${group.items.map((item) => `
+          <a class="${item.pageKey === currentPage ? "is-active" : ""}" href="${routePath(item.routeKey)}">
+            <span class="admin-menu-item-copy"><span class="material-symbols-outlined">${item.icon}</span><span>${escapeHtml(item.label)}</span></span>
+            ${item.badge ? `<b class="admin-menu-badge">${escapeHtml(item.badge)}</b>` : ""}
+          </a>
+        `).join("")}
+      </nav>
+    </section>
+  `).join("");
+}
+
+function renderSidebar(auth, currentPage, stats) {
+  const groups = buildMenuGroups(auth.primaryRole, stats);
+  const backlogCount = getBacklogCount(stats);
+  return `
+    <aside class="portal-sidebar admin-portal-sidebar">
+      <div class="admin-sidebar-user">
+        ${renderAvatar(auth.profile, auth.user, "admin-sidebar-avatar")}
+        <div>
+          <strong>Admin</strong>
+          <span>${escapeHtml(roleLabel(auth.primaryRole))}</span>
+        </div>
+      </div>
+      <div class="admin-menu-groups">${renderMenuGroups(groups, currentPage)}</div>
+      <div class="admin-sidebar-footer">
+        <div class="admin-sidebar-note">
+          <span>Supabase live</span>
+          <strong>${escapeHtml(backlogCount ? `${backlogCount} má»¥c chá» xá»­ lÃ½` : "Há» thá»ng Äang á»n Äá»nh")}</strong>
+          <p>Booking, giao dá»ch, review vÃ  ticket Äá»u Äá»c trá»±c tiáº¿p tá»« DB.</p>
+        </div>
+        <a class="portal-side-action admin-side-home" href="${routePath("home")}"><span class="material-symbols-outlined">home</span><span>Trang chá»§</span></a>
+      </div>
+    </aside>
+  `;
+}
+
+function renderTopbar(auth, currentPage, sourceMode) {
+  const page = PAGE_DEFINITIONS[currentPage];
+  const name = auth.profile?.full_name || auth.user?.email || "Quáº£n trá» viÃªn";
+  return `
+    <header class="portal-topbar admin-topbar">
+      <div class="admin-topbar-copy">
+        <span>${escapeHtml(sourceMode === "database" ? "Admin / DB live" : "Admin")}</span>
+        <strong>${escapeHtml(page.label)}</strong>
+      </div>
+      <div class="admin-topbar-tools">
+        <div class="portal-search-wrap admin-search-wrap"><span class="material-symbols-outlined">search</span><input id="admin-dashboard-search" type="search" placeholder="${escapeHtml(page.searchPlaceholder)}" /></div>
+        <a class="admin-topbar-link" href="${routePath("home")}"><span class="material-symbols-outlined">home</span><span>Trang chá»§</span></a>
+        <button class="portal-icon-button admin-logout-button" id="admin-logout" type="button" aria-label="ÄÄng xuáº¥t"><span class="material-symbols-outlined">logout</span></button>
+        <div class="portal-profile-block admin-profile-block"><div class="portal-profile-copy"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(roleLabel(auth.primaryRole))}</span></div>${renderAvatar(auth.profile, auth.user, "portal-avatar")}</div>
+      </div>
+    </header>
+  `;
+}
+
+function renderPageIntro(auth, currentPage, data, stats) {
+  const page = PAGE_DEFINITIONS[currentPage];
+  const dashboardAction = getDashboardAction(stats);
+  const introChips = currentPage === "dashboard"
+    ? [
+        "DB live",
+        `${data.profiles.length} ngÆ°á»i dÃ¹ng`,
+        `${data.bookings.length} booking`,
+        `${data.payments.length} giao dá»ch`
+      ]
+    : [
+        "DB live",
+        roleLabel(auth.primaryRole),
+        `${getPageBadge(currentPage, stats) || 0} má»¥c liÃªn quan`
+      ];
+
+  return `
+    <section class="admin-page-intro ${currentPage === "dashboard" ? "is-dashboard" : ""}">
+      <div>
+        <span class="admin-page-date">${escapeHtml(getAdminDateLabel())}</span>
+        <h1>${escapeHtml(page.title)}</h1>
+        <p>${escapeHtml(page.description)}</p>
+      </div>
+      <div class="admin-page-actions">
+        ${currentPage === "dashboard"
+          ? `<a class="admin-primary-cta" href="${routePath(dashboardAction.routeKey)}"><span class="material-symbols-outlined">${dashboardAction.icon}</span><span>${escapeHtml(dashboardAction.label)}</span></a>`
+          : `<a class="admin-secondary-cta" href="${routePath("admin")}"><span class="material-symbols-outlined">dashboard</span><span>Vá» tá»ng quan</span></a>`}
+        <div class="admin-chip-list">${introChips.map((chip) => `<span class="admin-soft-pill">${escapeHtml(chip)}</span>`).join("")}</div>
+      </div>
+    </section>
+  `;
+}
+
+function renderCapabilityGrid(items) {
+  return `<section class="admin-capability-grid">${items.map((item) => `<article class="admin-capability-card" data-search="${escapeHtml(`${item.title} ${item.code}`)}"><span class="material-symbols-outlined">${item.icon}</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><em>${escapeHtml(item.code)}</em></article>`).join("")}</section>`;
+}
+
+function renderTablePanel(title, description, headers, rows, footerText = "") {
+  return `
+    <article class="admin-panel admin-ops-table-panel">
+      <div class="portal-section-head admin-table-headline"><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div></div>
+      ${rows.length
+        ? `<div class="admin-table-wrap"><table class="admin-data-table"><thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div><div class="admin-table-footer"><p>${escapeHtml(footerText || `Hiá»n thá» ${rows.length} b?n ghi`)}</p></div>`
+        : `<div class="empty-state"><h3>ChÆ°a cÃ³ dá»¯ liá»u</h3><p>${escapeHtml(description)}</p></div>`}
+    </article>
+  `;
+}
+
+function renderBookingCards(booking) {
+  if (!booking.length) return '<div class="empty-state"><h3>ChÆ°a cÃ³ booking</h3><p>Booking tá»« DB sáº½ hiá»n á» ÄÃ¢y khi phÃ¡t sinh giao dá»ch.</p></div>';
+  return booking.slice(0, 5).map((booking) => {
+    const tone = getBookingTone(booking);
+    return `<article class="admin-queue-card" data-search="${escapeHtml(`${booking.booking_code} ${booking.contact_name || ""} ${booking.tour?.name || booking.snapshot_jsonb?.tour_name || ""}`)}"><div class="admin-queue-copy"><strong>#${escapeHtml(booking.booking_code)}</strong><h4>${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</h4><p>${escapeHtml(booking.contact_name || "KhÃ¡ch hÃ ng")} - ${escapeHtml(formatShortDate(booking.created_at))}</p></div><div class="admin-queue-side"><span>${escapeHtml(formatCurrency(booking.total_amount, booking.currency || "VND"))}</span>${renderStatusTag(tone.label, tone.tone)}</div></article>`;
+  }).join("");
+}
+
+function renderTopTourList(tours) {
+  if (!tours.length) return '<div class="empty-state"><h3>ChÆ°a cÃ³ xáº¿p háº¡ng tour</h3><p>Tour ná»i báº­t sáº½ hiá»n khi cÃ³ booking thá»±c táº¿.</p></div>';
+  return tours.map((tour) => {
+    const media = renderMediaFrame({
+      src: tour.image,
+      alt: tour.name,
+      className: "admin-tour-image",
+      placeholderLabel: "ChÆ°a cÃ³ áº£nh tour trong DB"
+    });
+    return `
+      <article class="admin-tour-item" data-search="${escapeHtml(tour.name)}">
+        ${media}
+        <div class="admin-tour-copy"><h4>${escapeHtml(tour.name)}</h4><p>${escapeHtml(tour.destinationLabel || "ChÆ°a cÃ³ Äiá»m Äáº¿n")} - ${escapeHtml(String(Number(tour.rating || 0).toFixed(1)))} sao</p></div>
+        <div class="admin-tour-price"><strong>${escapeHtml(formatCurrency(tour.price, tour.currency || "VND"))}</strong><span>${tour.bookings ? `${tour.bookings} booking` : "ChÆ°a cÃ³ booking"}</span></div>
+      </article>
+    `;
+  }).join("");
+}
+function renderTicketList(tickets) {
+  if (!tickets.length) return '<div class="empty-state"><h3>KhÃ´ng cÃ³ ticket má»</h3><p>Má»i yÃªu cáº§u há» trá»£ Äá»u ÄÃ£ ÄÆ°á»£c xá»­ lÃ½.</p></div>';
+  return tickets.slice(0, 4).map((ticket) => {
+    const tone = getTicketTone(ticket);
+    return `<article class="admin-ticket-card" data-search="${escapeHtml(`${ticket.subject || ""} ${ticket.customerName || ""} ${ticket.bookingCode || ""}`)}"><div class="admin-feedback-head"><div><strong>${escapeHtml(ticket.subject || `Há» trá»£ booking #${ticket.bookingCode || "N/A"}`)}</strong><p>${escapeHtml(ticket.customerName || "KhÃ¡ch hÃ ng")} - ${escapeHtml(ticket.bookingCode || "KhÃ´ng cÃ³ booking")}</p></div>${renderStatusTag(tone.label, tone.tone)}</div><div class="admin-ticket-meta"><span><span class="material-symbols-outlined">priority_high</span>${escapeHtml(ticket.priority || "normal")}</span><span><span class="material-symbols-outlined">travel_explore</span>${escapeHtml(ticket.tour?.name || "ChÆ°a cÃ³ tour")}</span></div></article>`;
+  }).join("");
+}
+
+function renderReviewList(reviews) {
+  if (!reviews.length) return '<div class="empty-state"><h3>KhÃ´ng cÃ³ review chá» duyá»t</h3><p>Review má»i tá»« DB sáº½ hiá»n á» ÄÃ¢y khi khÃ¡ch gá»­i ÄÃ¡nh giÃ¡.</p></div>';
+  return reviews.slice(0, 6).map((review) => {
+    const tone = getReviewTone(review);
+    const replyText = review.reply?.text || "";
+    const replyLabel = replyText ? "Cáº­p nháº­t pháº£n há»i" : "Pháº£n há»i";
+    return `
+      <article class="admin-feedback-card" data-search="${escapeHtml(`${review.authorName || ""} ${review.tour?.name || ""} ${review.comment || ""}`)}">
+        <div class="admin-feedback-head">
+          <div>
+            <strong>${escapeHtml(review.authorName || review.contactName || "KhÃ¡ch hÃ ng")}</strong>
+            <p>${escapeHtml(review.tour?.name || "Tour")} - ${escapeHtml(formatStatus(review.status))}</p>
+          </div>
+          ${renderStatusTag(tone.label, tone.tone)}
+        </div>
+        <div class="admin-ticket-meta">
+          <span><span class="material-symbols-outlined">star</span>${escapeHtml(String(Number(review.rating || 0).toFixed(1)))}/5</span>
+          <span><span class="material-symbols-outlined">travel_explore</span>${escapeHtml(review.booking?.booking_code || review.tour?.name || "Review")}</span>
+          <span><span class="material-symbols-outlined">schedule</span>${escapeHtml(formatDateTime(review.created_at))}</span>
+        </div>
+        <blockquote>${escapeHtml(review.comment || "KhÃ´ng cÃ³ ná»i dung ÄÃ¡nh giÃ¡.")}</blockquote>
+        ${review.reply ? `<div class="admin-mini-note"><strong>Pháº£n há»i</strong><p>${escapeHtml(review.reply.text)}</p></div>` : ""}
+        <div class="admin-feedback-actions">
+          ${review.status !== "approved" ? `<button class="admin-inline-button is-primary" type="button" data-admin-action="approve-review" data-review-id="${escapeHtml(review.id)}" data-review-status="approved" data-review-reply="${escapeHtml(replyText)}">Duy?t</button>` : ""}
+          ${review.status !== "hidden" ? `<button class="admin-inline-button" type="button" data-admin-action="hide-review" data-review-id="${escapeHtml(review.id)}" data-review-status="hidden" data-review-reply="${escapeHtml(replyText)}">?n</button>` : ""}
+          <button class="admin-inline-button" type="button" data-admin-action="reply-review" data-review-id="${escapeHtml(review.id)}" data-review-status="${escapeHtml(review.status || "pending")}" data-review-reply="${escapeHtml(replyText)}">${escapeHtml(replyLabel)}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderCustomerRows(customers) {
+  if (!customers.length) return '<div class="empty-state"><h3>ChÆ°a cÃ³ khÃ¡ch hÃ ng</h3><p>Dá»¯ liá»u khÃ¡ch hÃ ng sáº½ hiá»n khi cÃ³ profile hoáº·c booking.</p></div>';
+  return customers.map((customer) => `<article class="admin-customer-row" data-search="${escapeHtml(`${customer.name} ${customer.email}`)}"><div class="admin-customer-avatar">${escapeHtml(getInitials(customer.name))}</div><div class="admin-customer-row-copy"><strong>${escapeHtml(customer.name)}</strong><p>${escapeHtml(customer.email || "ChÆ°a cÃ³ email")}</p></div><div class="admin-customer-row-side"><span>${escapeHtml(String(customer.bookings))} booking</span><em>${escapeHtml(formatCurrency(customer.spend, "VND"))}</em></div></article>`).join("");
+}
+
+function renderProfileRows(profiles) {
+  if (!profiles.length) return '<div class="empty-state"><h3>ChÆ°a cÃ³ há» sÆ¡</h3><p>Há» sÆ¡ ngÆ°á»i dÃ¹ng sáº½ hiá»n á» ÄÃ¢y.</p></div>';
+  return profiles.slice(0, 8).map((profile) => `<article class="admin-profile-row" data-search="${escapeHtml(`${profile.full_name || ""} ${profile.email || ""} ${profile.primaryRole || ""}`)}"><div class="admin-customer-avatar">${escapeHtml(getInitials(profile.full_name || profile.email || "TH"))}</div><div class="admin-customer-row-copy"><strong>${escapeHtml(profile.full_name || profile.email || "NgÆ°á»i dÃ¹ng")}</strong><p>${escapeHtml(profile.email || "ChÆ°a cÃ³ email")}</p></div><div class="admin-profile-role">${escapeHtml(roleLabel(profile.primaryRole))}</div></article>`).join("");
+}
+
+function renderRoleCards(roleCounts) {
+  return ["customer", "staff", "admin", "super_admin"].map((role) => `<article class="admin-role-card"><span>${escapeHtml(roleLabel(role))}</span><strong>${escapeHtml(String(roleCounts[role] || 0))}</strong></article>`).join("");
+}
+
+function renderPaymentMethods(methods) {
+  if (!methods.length) return '<div class="empty-state"><h3>ChÆ°a cáº¥u hÃ¬nh payment method</h3><p>PhÆ°Æ¡ng thá»©c thanh toÃ¡n sáº½ hiá»n á» ÄÃ¢y sau khi cáº¥u hÃ¬nh.</p></div>';
+  return `<div class="admin-chip-list">${methods.map((method) => `<span class="admin-soft-pill">${escapeHtml(method.name)}</span>`).join("")}</div>`;
+}
+
+function renderActivityList(items) {
+  if (!items.length) return '<div class="empty-state"><h3>ChÆ°a cÃ³ activity log</h3><p>Hoáº¡t Äá»ng há» thá»ng sáº½ hiá»n á» ÄÃ¢y khi DB cÃ³ báº£n ghi.</p></div>';
+  return `<div class="portal-timeline-list admin-activity-list">${items.slice(0, 6).map((item, index) => `<div class="portal-timeline-item portal-timeline-item-accent-${(index % 3) + 1}" data-search="${escapeHtml(`${item.action} ${item.entity_type}`)}"><span class="portal-timeline-dot"></span><div><strong>${escapeHtml(item.action)}</strong><p>${escapeHtml(item.actor?.full_name || "Há» thá»ng")} - ${escapeHtml(formatDateTime(item.created_at))}</p></div></div>`).join("")}</div>`;
+}
+
+function renderCancellationQueue(booking) {
+  if (!booking.length) {
+    return '<div class="empty-state"><h3>KhÃ´ng cÃ³ yÃªu cáº§u há»§y</h3><p>YÃªu cáº§u há»§y booking tá»« khÃ¡ch sáº½ hiá»n á» ÄÃ¢y.</p></div>';
+  }
+
+  return booking.slice(0, 6).map((booking) => `
+    <article class="admin-feedback-card" data-search="${escapeHtml(`${booking.booking_code} ${booking.contact_name || ""} ${booking.cancel_reason || ""}`)}">
+      <div class="admin-feedback-head">
+        <div>
+          <strong>#${escapeHtml(booking.booking_code)}</strong>
+          <p>${escapeHtml(booking.contact_name || "KhÃ¡ch hÃ ng")} - ${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</p>
+        </div>
+        ${renderStatusTag("Chá» duyá»t há»§y", "danger")}
+      </div>
+      <blockquote>${escapeHtml(booking.cancel_reason || "Khách dang ch? duy?t yêu c?u h?y booking.")}</blockquote>
+      <div class="admin-ticket-meta">
+        <span><span class="material-symbols-outlined">payments</span>${escapeHtml(formatCurrency(booking.total_amount, booking.currency || "VND"))}</span>
+        <span><span class="material-symbols-outlined">calendar_today</span>${escapeHtml(formatShortDate(booking.snapshot_jsonb?.departure_date || booking.created_at))}</span>
+      </div>
+      <div class="admin-feedback-actions">
+        <button class="admin-inline-button is-primary" type="button" data-admin-action="approve-cancellation" data-booking-code="${escapeHtml(booking.booking_code)}">Duyá»t há»§y</button>
+        <button class="admin-inline-button" type="button" data-admin-action="reject-cancellation" data-booking-code="${escapeHtml(booking.booking_code)}">Tá»« chá»i</button>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderPendingPaymentQueue(booking) {
+  const actionable = booking.filter((booking) => {
+    const latestPayment = booking.payments?.[0] || null;
+    const paymentState = latestPayment?.status || booking.payment_status;
+    return !["cancelled", "cancel_requested", "expired", "completed"].includes(booking.booking_status)
+      && ["pending", "unpaid", "failed"].includes(booking.payment_status)
+      && !["paid", "refunded", "partially_refunded"].includes(paymentState);
+  });
+
+  if (!actionable.length) {
+    return '<div class="empty-state"><h3>KhÃ´ng cÃ³ queue thanh toÃ¡n tay</h3><p>Booking chá» xÃ¡c nháº­n thanh toÃ¡n sáº½ hiá»n á» ÄÃ¢y.</p></div>';
+  }
+
+  return actionable.slice(0, 6).map((booking) => {
+    const latestPayment = booking.payments?.[0] || null;
+    const actionLabel = latestPayment && ["failed", "expired", "cancelled"].includes(latestPayment.status)
+      ? "Thá»­ láº¡i vÃ  ÄÃ¡nh dáº¥u ÄÃ£ thanh toÃ¡n"
+      : "Ghi nháº­n thanh toÃ¡n tay";
+    return `
+      <article class="admin-ticket-card" data-search="${escapeHtml(`${booking.booking_code} ${booking.contact_name || ""} ${booking.tour?.name || ""}`)}">
+        <div class="admin-feedback-head">
+          <div>
+            <strong>#${escapeHtml(booking.booking_code)}</strong>
+            <p>${escapeHtml(booking.contact_name || "KhÃ¡ch hÃ ng")} - ${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</p>
+          </div>
+          ${(() => { const tone = getPaymentTone({ status: latestPayment?.status || booking.payment_status }); return renderStatusTag(tone.label, tone.tone); })()}
+        </div>
+        <div class="admin-ticket-meta">
+          <span><span class="material-symbols-outlined">payments</span>${escapeHtml(formatCurrency(booking.total_amount, booking.currency || "VND"))}</span>
+          <span><span class="material-symbols-outlined">credit_score</span>${escapeHtml(booking.snapshot_jsonb?.selected_payment_method || latestPayment?.provider_name || "Thá»§ cÃ´ng")}</span>
+        </div>
+        <div class="admin-feedback-actions">
+          <button class="admin-inline-button is-primary" type="button" data-admin-action="record-manual-payment" data-booking-code="${escapeHtml(booking.booking_code)}">${escapeHtml(actionLabel)}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderRefundQueue(refunds) {
+  const pendingRefunds = refunds.filter((refund) => refund.status === "pending");
+  if (!pendingRefunds.length) {
+    return '<div class="empty-state"><h3>KhÃ´ng cÃ³ queue hoÃ n tiá»n</h3><p>Báº£n ghi hoÃ n tiá»n chá» xá»­ lÃ½ sáº½ hiá»n á» ÄÃ¢y.</p></div>';
+  }
+
+  return pendingRefunds.slice(0, 6).map((refund) => `
+    <article class="admin-feedback-card" data-search="${escapeHtml(`${refund.payment?.booking?.booking_code || ""} ${refund.reason || ""}`)}">
+      <div class="admin-feedback-head">
+        <div>
+          <strong>${escapeHtml(refund.payment?.booking?.booking_code || "HoÃ n tiá»n")}</strong>
+          <p>${escapeHtml(refund.payment?.booking?.contact_name || "KhÃ¡ch")} - ${escapeHtml(refund.payment?.provider_name || "Thá»§ cÃ´ng")}</p>
+        </div>
+        ${renderStatusTag("Chá» hoÃ n tiá»n", "danger")}
+      </div>
+      <blockquote>${escapeHtml(refund.reason || "YÃªu cáº§u hoÃ n tiá»n Äang chá» xÃ¡c nháº­n tá»« admin.")}</blockquote>
+      <div class="admin-ticket-meta">
+        <span><span class="material-symbols-outlined">savings</span>${escapeHtml(formatCurrency(refund.amount, refund.payment?.currency || "VND"))}</span>
+        <span><span class="material-symbols-outlined">schedule</span>${escapeHtml(formatDateTime(refund.created_at))}</span>
+      </div>
+      <div class="admin-feedback-actions">
+        <button class="admin-inline-button is-primary" type="button" data-admin-action="process-refund" data-refund-id="${escapeHtml(refund.id)}">ÄÃ¡nh dáº¥u ÄÃ£ hoÃ n</button>
+        <button class="admin-inline-button" type="button" data-admin-action="reject-refund" data-refund-id="${escapeHtml(refund.id)}">Tá»« chá»i</button>
+      </div>
+    </article>
+  `).join("");
+}
+
+function getRefundState(payment) {
+  const refunds = Array.isArray(payment?.refunds) ? payment.refunds : [];
+  if (!refunds.length) return "none";
+  if (refunds.some((refund) => refund.status === "pending")) return "pending";
+  if (refunds.some((refund) => refund.status === "refunded")) return "refunded";
+  if (refunds.some((refund) => refund.status === "rejected")) return "rejected";
+  return refunds[0]?.status || "none";
+}
+
+function getPaymentReconciliation(payment) {
+  const booking = payment?.booking || null;
+  if (!booking?.id) return { label: "M?t li?n k?t booking", tone: "danger" };
+  if (["paid", "partially_paid", "refunded", "partially_refunded"].includes(payment.status)
+    && !["paid", "partially_paid", "refunded", "partially_refunded"].includes(booking.payment_status)) {
+    return { label: "Cáº§n Äá»i soÃ¡t", tone: "info" };
+  }
+  return { label: "?? kh?p", tone: "success" };
+}
+
+function getFilteredBookings(data) {
+  const filters = getRuntimeFilters("bookings");
+  return (Array.isArray(data?.bookings) ? data.bookings : []).filter((booking) => {
+    if (filters.bookingStatus && filters.bookingStatus !== "all" && booking.booking_status !== filters.bookingStatus) return false;
+    if (filters.paymentStatus && filters.paymentStatus !== "all" && booking.payment_status !== filters.paymentStatus) return false;
+    if (filters.cancellation === "requested" && booking.booking_status !== "cancel_requested") return false;
+    if (filters.cancellation === "resolved" && !["cancelled", "confirmed", "awaiting_payment"].includes(booking.booking_status)) return false;
+    return true;
+  });
+}
+
+function getFilteredPayments(data) {
+  const filters = getRuntimeFilters("payments");
+  return (Array.isArray(data?.payments) ? data.payments : []).filter((payment) => {
+    const provider = String(payment.provider_name || payment.paymentMethod?.name || "manual").toLowerCase();
+    if (filters.status && filters.status !== "all" && payment.status !== filters.status) return false;
+    if (filters.refundStatus && filters.refundStatus !== "all" && getRefundState(payment) !== filters.refundStatus) return false;
+    if (filters.provider && filters.provider !== "all" && provider !== filters.provider) return false;
+    return true;
+  });
+}
+
+function buildCustomerRecords(data) {
+  const records = new Map();
+  const emailIndex = new Map();
+  const ensureRecord = (key, seed = {}) => {
+    const normalizedKey = String(key || seed.email || seed.name || `customer-${records.size + 1}`);
+    if (!records.has(normalizedKey)) {
+      records.set(normalizedKey, {
+        key: normalizedKey,
+        profile: seed.profile || null,
+        profileId: seed.profile?.id || seed.profileId || null,
+        name: seed.name || seed.profile?.full_name || seed.profile?.email || "KhÃ¡ch hÃ ng",
+        email: seed.email || seed.profile?.email || "",
+        customerLevel: seed.customerLevel || seed.profile?.customer_level || "",
+        bookingCount: Number(seed.bookingCount || 0),
+        spend: Number(seed.totalSpend || 0),
+        lastActivityAt: seed.lastActivityAt || seed.profile?.lastBookingAt || seed.profile?.created_at || "",
+        bookings: [],
+        reviews: [],
+        tickets: []
+      });
+    }
+    const record = records.get(normalizedKey);
+    if (record.email) emailIndex.set(record.email.toLowerCase(), normalizedKey);
+    return record;
+  };
+
+  (Array.isArray(data?.profiles) ? data.profiles : []).filter((profile) => profile.primaryRole === "customer").forEach((profile) => {
+    ensureRecord(profile.id || profile.email, {
+      profile,
+      name: profile.full_name || profile.email || "KhÃ¡ch hÃ ng",
+      email: profile.email || "",
+      customerLevel: profile.customer_level || "",
+      lastActivityAt: profile.lastBookingAt || profile.created_at || ""
+    });
+  });
+
+  (Array.isArray(data?.bookings) ? data.bookings : []).forEach((booking) => {
+    const key = booking.user_id || (booking.contact_email ? emailIndex.get(String(booking.contact_email).toLowerCase()) : null) || booking.contact_email || booking.contact_name || booking.booking_code;
+    const record = ensureRecord(key, { name: booking.contact_name || "KhÃ¡ch hÃ ng", email: booking.contact_email || "" });
+    record.bookings.push(booking);
+    record.bookingCount += 1;
+    record.spend += Number(booking.total_amount || 0);
+    record.name = record.name || booking.contact_name || "KhÃ¡ch hÃ ng";
+    record.email = record.email || booking.contact_email || "";
+    if (booking.user_id && !record.profileId) record.profileId = booking.user_id;
+    const bookingDate = String(booking.created_at || "");
+    if (bookingDate > String(record.lastActivityAt || "")) record.lastActivityAt = bookingDate;
+  });
+
+  (Array.isArray(data?.reviews) ? data.reviews : []).forEach((review) => {
+    const booking = review.booking || null;
+    const key = review.user_id || booking?.user_id || (booking?.contact_email ? emailIndex.get(String(booking.contact_email).toLowerCase()) : null) || booking?.contact_email || review.authorName || review.id;
+    const record = ensureRecord(key, { name: review.authorName || review.contactName || booking?.contact_name || "KhÃ¡ch hÃ ng", email: booking?.contact_email || "" });
+    record.reviews.push(review);
+    const reviewDate = String(review.created_at || review.createdAt || "");
+    if (reviewDate > String(record.lastActivityAt || "")) record.lastActivityAt = reviewDate;
+  });
+
+  (Array.isArray(data?.tickets) ? data.tickets : []).forEach((ticket) => {
+    const booking = ticket.booking || null;
+    const key = ticket.user_id || booking?.user_id || (booking?.contact_email ? emailIndex.get(String(booking.contact_email).toLowerCase()) : null) || booking?.contact_email || ticket.customerName || ticket.id;
+    const record = ensureRecord(key, { name: ticket.customerName || booking?.contact_name || "KhÃ¡ch hÃ ng", email: booking?.contact_email || "" });
+    record.tickets.push(ticket);
+    const ticketDate = String(ticket.updated_at || ticket.created_at || "");
+    if (ticketDate > String(record.lastActivityAt || "")) record.lastActivityAt = ticketDate;
+  });
+
+  return Array.from(records.values()).filter((record) => record.bookingCount > 0 || record.profile?.primaryRole === "customer").sort((left, right) => String(right.lastActivityAt || "").localeCompare(String(left.lastActivityAt || "")));
+}
+
+function getFilteredCustomers(data) {
+  const filters = getRuntimeFilters("customers");
+  return buildCustomerRecords(data).filter((customer) => {
+    if (filters.segment === "repeat") return customer.bookingCount > 1;
+    if (filters.segment === "support") return customer.tickets.length > 0;
+    if (filters.segment === "vip") return customer.spend >= 10000000 || customer.bookingCount >= 3;
+    return true;
+  });
+}
+
+function renderToolbarField(pageKey, filterKey, label, options) {
+  const filters = getRuntimeFilters(pageKey);
+  return `<label class="admin-filter-field"><span>${escapeHtml(label)}</span><select data-admin-filter="${escapeHtml(filterKey)}" data-admin-filter-page="${escapeHtml(pageKey)}">${options.map((option) => `<option value="${escapeHtml(option.value)}" ${String(filters[filterKey] || "all") === String(option.value) ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}</select></label>`;
+}
+
+function renderOpsToolbar(title, copy, controls = [], actions = "") {
+  return `<section class="admin-ops-toolbar"><div class="admin-ops-toolbar-copy"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(copy)}</p></div><div class="admin-ops-toolbar-controls">${controls.join("")}</div><div class="admin-ops-toolbar-actions">${actions}</div></section>`;
+}
+
+function csvEscape(value) {
+  const safeValue = String(value ?? "").replace(/"/g, '""');
+  return `"${safeValue}"`;
+}
+
+function buildCsvContent(headers, rows) {
+  return [headers.map(csvEscape).join(","), ...rows.map((row) => row.map(csvEscape).join(","))].join("\n");
+}
+
+function downloadCsvFile(fileName, headers, rows) {
+  if (typeof document === "undefined" || !rows.length) {
+    showToast("Kh?ng c? d? li?u ?? export CSV.", "error");
+    return;
+  }
+  const blob = new Blob([buildCsvContent(headers, rows)], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportAdminCsv(pageKey) {
+  const data = MANAGEMENT_RUNTIME.data;
+  if (!data) return;
+  if (pageKey === "bookings") {
+    const rows = getFilteredBookings(data).map((booking) => [booking.booking_code, booking.contact_name || "", booking.contact_email || "", booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour", booking.total_amount || 0, booking.booking_status || "", booking.payment_status || "", booking.created_at || ""]);
+    downloadCsvFile("admin-bookings.csv", ["Booking code", "Customer", "Email", "Tour", "Amount", "Booking status", "Payment status", "Created at"], rows);
+    return;
+  }
+  if (pageKey === "payments") {
+    const rows = getFilteredPayments(data).map((payment) => [payment.transaction_code || payment.provider_payment_id || payment.id, payment.booking?.booking_code || "", payment.provider_name || payment.paymentMethod?.name || "", payment.amount || 0, payment.status || "", getRefundState(payment), payment.requested_at || payment.created_at || ""]);
+    downloadCsvFile("admin-payments.csv", ["Transaction", "Booking", "Provider", "Amount", "Status", "Refund state", "Requested at"], rows);
+  }
+}
+
+function getBookingById(data, id) {
+  return (Array.isArray(data?.bookings) ? data.bookings : []).find((booking) => String(booking.id) === String(id) || String(booking.booking_code) === String(id)) || null;
+}
+
+function getPaymentById(data, id) {
+  return (Array.isArray(data?.payments) ? data.payments : []).find((payment) => String(payment.id) === String(id)) || null;
+}
+
+function getCustomerByKey(data, key) {
+  return buildCustomerRecords(data).find((customer) => String(customer.key) === String(key) || String(customer.profileId || "") === String(key)) || null;
+}
+
+function formatAdminEventType(eventType) {
+  return String(eventType || "Ho?t ??ng").split("_").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function renderDetailStats(items) {
+  return `<div class="admin-detail-grid">${items.map((item) => `<article class="admin-detail-card"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><p>${escapeHtml(item.hint || "")}</p></article>`).join("")}</div>`;
+}
+
+function renderDetailMiniRows(items, emptyTitle, emptyCopy) {
+  if (!items.length) return `<div class="empty-state"><h3>${escapeHtml(emptyTitle)}</h3><p>${escapeHtml(emptyCopy)}</p></div>`;
+  return `<div class="admin-list-stack">${items.join("")}</div>`;
+}
+
+function renderBookingDetail(booking) {
+  if (!booking) return `<div class="empty-state"><h3>Kh?ng t?m th?y booking</h3><p>B?n ghi n?y kh?ng c?n kh? d?ng trong DB.</p></div>`;
+  const canReviewCancellation = booking.booking_status === "cancel_requested";
+  const canRecordPayment = !["cancelled", "completed"].includes(booking.booking_status) && ["pending", "unpaid", "failed", "expired"].includes(booking.payment_status);
+  const travelerRows = (booking.travelers || []).map((traveler) => `<article class="admin-mini-row"><div><strong>${escapeHtml(traveler.full_name || traveler.name || "H?nh kh?ch")}</strong><p>${escapeHtml([traveler.type || traveler.traveler_type || "guest", traveler.date_of_birth || traveler.passport_number || ""].filter(Boolean).join(" ? "))}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(traveler.gender || "")}</span></div></article>`);
+  const paymentRows = (booking.payments || []).map((payment) => `<article class="admin-mini-row"><div><strong>${escapeHtml(payment.transaction_code || payment.provider_payment_id || payment.id.slice(0, 8))}</strong><p>${escapeHtml(payment.provider_name || payment.paymentMethod?.name || "Thanh to?n")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatCurrency(payment.amount, payment.currency || "VND"))}</span><em>${escapeHtml(`${formatStatus(payment.status)} ? ${getRefundState(payment)}`)}</em></div></article>`);
+  const eventRows = (booking.events || []).map((event) => `<article class="admin-mini-row"><div><strong>${escapeHtml(formatAdminEventType(event.event_type))}</strong><p>${escapeHtml(event.note || "Kh?ng c? ghi ch? b? sung.")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatDateTime(event.created_at))}</span></div></article>`);
+  const ticketRows = (booking.tickets || []).map((ticket) => `<article class="admin-mini-row"><div><strong>${escapeHtml(ticket.subject || ticket.bookingCode || "Ticket")}</strong><p>${escapeHtml(ticket.messages?.[ticket.messages.length - 1]?.message_text || ticket.note || "Kh?ng c? h?i tho?i b? sung.")}</p></div><div class="admin-mini-row-side"><span>${renderStatusTag(getTicketTone(ticket).label, getTicketTone(ticket).tone)}</span></div></article>`);
+  const reviewRows = booking.review ? [`<article class="admin-mini-row"><div><strong>${escapeHtml(`${Number(booking.review.rating || 0).toFixed(1)}/5`)} ? ${escapeHtml(booking.review.authorName || "KhÃ¡ch hÃ ng")}</strong><p>${escapeHtml(booking.review.comment || "Kh?ng c? n?i dung review.")}</p></div><div class="admin-mini-row-side"><span>${renderStatusTag(getReviewTone(booking.review).label, getReviewTone(booking.review).tone)}</span></div></article>`] : [];
+  return `<div class="admin-detail-shell"><div class="admin-detail-header"><div><span class="eyebrow">Booking #${escapeHtml(booking.booking_code)}</span><h2>${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</h2><p>${escapeHtml(booking.contact_name || "KhÃ¡ch hÃ ng")} ? ${escapeHtml(booking.contact_email || "")}</p></div><button class="admin-inline-button" type="button" data-admin-close-detail>??ng</button></div><div class="admin-detail-actions"><button class="admin-inline-button" type="button" data-admin-action="add-booking-note" data-booking-code="${escapeHtml(booking.booking_code)}">Ghi ch? n?i b?</button>${canReviewCancellation ? `<button class="admin-inline-button is-primary" type="button" data-admin-action="approve-cancellation" data-booking-code="${escapeHtml(booking.booking_code)}">Duyá»t há»§y</button><button class="admin-inline-button" type="button" data-admin-action="reject-cancellation" data-booking-code="${escapeHtml(booking.booking_code)}">Tá»« chá»i h?y</button>` : ""}${canRecordPayment ? `<button class="admin-inline-button is-primary" type="button" data-admin-action="record-manual-payment" data-booking-code="${escapeHtml(booking.booking_code)}">X?c nh?n thanh to?n</button>` : ""}</div>${renderDetailStats([{ label: "Tr?ng th?i booking", value: formatStatus(booking.booking_status), hint: "??ng b? t? bookings" }, { label: "Thanh to?n", value: formatStatus(booking.payment_status), hint: "Theo payment th?t" }, { label: "T?ng ti?n", value: formatCurrency(booking.total_amount, booking.currency || "VND"), hint: "Gi? tr? booking" }, { label: "Kh?i h?nh", value: formatShortDate(booking.snapshot_jsonb?.departure_date || booking.schedule?.departureDate || booking.created_at), hint: "L?ch th?c t?" }])}<section class="admin-detail-section"><div class="portal-section-head"><div><h3>Timeline booking</h3><p>Ghi t? booking_events.</p></div></div>${renderDetailMiniRows(eventRows, "Ch?a c? timeline", "Booking n?y ch?a ph?t sinh event v?n h?nh.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>H?nh kh?ch</h3><p>${escapeHtml(String(booking.totalGuests || 0))} kh?ch trong booking.</p></div></div>${renderDetailMiniRows(travelerRows, "Ch?a c? h?nh kh?ch", "Booking n?y ch?a c? d? li?u traveler.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>Thanh to?n & refund</h3><p>??i so?t payment v? refund theo booking n?y.</p></div></div>${renderDetailMiniRows(paymentRows, "Ch?a c? payment", "Booking n?y ch?a ph?t sinh payment attempt.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>Support & review</h3><p>Ticket vÃ  review g?n v?i booking.</p></div></div>${renderDetailMiniRows([...ticketRows, ...reviewRows], "Ch?a c? support/review", "Booking n?y ch?a ph?t sinh ticket ho?c review.")}</section></div>`;
+}
+
+function renderPaymentDetail(payment) {
+  if (!payment) return `<div class="empty-state"><h3>Kh?ng t?m th?y payment</h3><p>B?n ghi n?y kh?ng c?n kh? d?ng trong DB.</p></div>`;
+  const booking = payment.booking || null;
+  const reconciliation = getPaymentReconciliation(payment);
+  const refundRows = (payment.refunds || []).map((refund) => `<article class="admin-mini-row"><div><strong>${escapeHtml(formatCurrency(refund.amount, payment.currency || "VND"))}</strong><p>${escapeHtml(refund.reason || "Kh?ng c? l? do ho?n ti?n.")}</p></div><div class="admin-mini-row-side"><span>${renderStatusTag(formatStatus(refund.status), refund.status === "pending" ? "danger" : "success")}</span><em>${escapeHtml(formatDateTime(refund.created_at))}</em></div>${refund.status === "pending" ? `<div class="admin-detail-inline-actions"><button class="admin-inline-button is-primary" type="button" data-admin-action="process-refund" data-refund-id="${escapeHtml(refund.id)}">Ho?n ti?n</button><button class="admin-inline-button" type="button" data-admin-action="reject-refund" data-refund-id="${escapeHtml(refund.id)}">Tá»« chá»i</button></div>` : ""}</article>`);
+  const eventRows = (payment.paymentEvents || []).map((event) => `<article class="admin-mini-row"><div><strong>${escapeHtml(formatAdminEventType(event.event_name))}</strong><p>${escapeHtml(JSON.stringify(event.payload || {}))}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatDateTime(event.processed_at || event.received_at || event.created_at))}</span></div></article>`);
+  return `<div class="admin-detail-shell"><div class="admin-detail-header"><div><span class="eyebrow">Payment ${escapeHtml(payment.transaction_code || payment.provider_payment_id || payment.id.slice(0, 8))}</span><h2>${escapeHtml(payment.provider_name || payment.paymentMethod?.name || "Thanh to?n")}</h2><p>${escapeHtml(booking?.booking_code || "KhÃ´ng cÃ³ booking li?n k?t")} ? ${escapeHtml(formatCurrency(payment.amount, payment.currency || "VND"))}</p></div><button class="admin-inline-button" type="button" data-admin-close-detail>??ng</button></div><div class="admin-detail-actions">${booking?.booking_code ? `<button class="admin-inline-button" type="button" data-admin-action="add-booking-note" data-booking-code="${escapeHtml(booking.booking_code)}">Ghi ch? n?i b?</button>` : ""}${booking?.booking_code && ["pending", "unpaid", "failed", "expired"].includes(booking.payment_status) ? `<button class="admin-inline-button is-primary" type="button" data-admin-action="record-manual-payment" data-booking-code="${escapeHtml(booking.booking_code)}">X?c nh?n th? c?ng</button>` : ""}</div>${renderDetailStats([{ label: "Tr?ng th?i", value: formatStatus(payment.status), hint: "payments.status" }, { label: "Refund", value: getRefundState(payment), hint: "refunds theo payment" }, { label: "??i so?t", value: reconciliation.label, hint: "Li?n k?t booking/payment" }, { label: "Booking", value: booking?.booking_code || "N/A", hint: booking?.tour?.name || booking?.snapshot_jsonb?.tour_name || "KhÃ´ng cÃ³ booking" }])}<section class="admin-detail-section"><div class="portal-section-head"><div><h3>Refund status</h3><p>Refund linked v?o payment n?y.</p></div></div>${renderDetailMiniRows(refundRows, "Ch?a c? refund", "Payment n?y ch?a ph?t sinh refund.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>Payment events</h3><p>Event t? payment_events.</p></div></div>${renderDetailMiniRows(eventRows, "Ch?a c? payment event", "Payment n?y ch?a c? log ??i so?t.")}</section></div>`;
+}
+
+function renderCustomerDetail(customer) {
+  if (!customer) return `<div class="empty-state"><h3>Kh?ng t?m th?y kh?ch h?ng</h3><p>H? s? n?y kh?ng c?n kh? d?ng trong DB.</p></div>`;
+  const bookingRows = customer.bookings.slice(0, 12).map((booking) => `<article class="admin-mini-row"><div><strong>#${escapeHtml(booking.booking_code)}</strong><p>${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatCurrency(booking.total_amount, booking.currency || "VND"))}</span><em>${escapeHtml(formatStatus(booking.booking_status))}</em></div></article>`);
+  const reviewRows = customer.reviews.slice(0, 8).map((review) => `<article class="admin-mini-row"><div><strong>${escapeHtml(`${Number(review.rating || 0).toFixed(1)}/5`)} ? ${escapeHtml(review.tour?.name || "Review")}</strong><p>${escapeHtml(review.comment || "Kh?ng c? n?i dung review.")}</p></div><div class="admin-mini-row-side"><span>${renderStatusTag(getReviewTone(review).label, getReviewTone(review).tone)}</span></div></article>`);
+  const ticketRows = customer.tickets.slice(0, 8).map((ticket) => `<article class="admin-mini-row"><div><strong>${escapeHtml(ticket.subject || ticket.bookingCode || "Ticket")}</strong><p>${escapeHtml(ticket.messages?.[ticket.messages.length - 1]?.message_text || "Kh?ng c? h?i tho?i m?i.")}</p></div><div class="admin-mini-row-side"><span>${renderStatusTag(getTicketTone(ticket).label, getTicketTone(ticket).tone)}</span></div></article>`);
+  return `<div class="admin-detail-shell"><div class="admin-detail-header"><div><span class="eyebrow">KhÃ¡ch hÃ ng</span><h2>${escapeHtml(customer.name || "KhÃ¡ch hÃ ng")}</h2><p>${escapeHtml(customer.email || "ChÆ°a cÃ³ email")}</p></div><button class="admin-inline-button" type="button" data-admin-close-detail>??ng</button></div>${renderDetailStats([{ label: "Booking", value: String(customer.bookingCount || 0), hint: "L?ch s? Äáº·t tour" }, { label: "Chi ti?u", value: formatCurrency(customer.spend || 0, "VND"), hint: "T?ng chi ti?u" }, { label: "Review", value: String(customer.reviews.length || 0), hint: "Review history" }, { label: "Ticket", value: String(customer.tickets.length || 0), hint: "Ticket history" }])}<section class="admin-detail-section"><div class="portal-section-head"><div><h3>Booking history</h3><p>Customer ?ang nh?n c?ng d? li?u booking t? DB.</p></div></div>${renderDetailMiniRows(bookingRows, "ChÆ°a cÃ³ booking", "Kh?ch n?y ch?a ph?t sinh booking th?t.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>Review history</h3><p>Approved v? pending review g?n theo customer.</p></div></div>${renderDetailMiniRows(reviewRows, "Ch?a c? review", "Kh?ch n?y ch?a g?i review.")}</section><section class="admin-detail-section"><div class="portal-section-head"><div><h3>Ticket history</h3><p>Support ticket ?ang g?n v?i customer.</p></div></div>${renderDetailMiniRows(ticketRows, "Ch?a c? ticket", "Kh?ch n?y ch?a t?o support ticket.")}</section></div>`;
+}
+
+function renderManagementDetailContent() {
+  if (!MANAGEMENT_RUNTIME.detail || !MANAGEMENT_RUNTIME.data) return "";
+  let content = "";
+  if (MANAGEMENT_RUNTIME.detail.type === "booking") content = renderBookingDetail(getBookingById(MANAGEMENT_RUNTIME.data, MANAGEMENT_RUNTIME.detail.id));
+  if (MANAGEMENT_RUNTIME.detail.type === "payment") content = renderPaymentDetail(getPaymentById(MANAGEMENT_RUNTIME.data, MANAGEMENT_RUNTIME.detail.id));
+  if (MANAGEMENT_RUNTIME.detail.type === "customer") content = renderCustomerDetail(getCustomerByKey(MANAGEMENT_RUNTIME.data, MANAGEMENT_RUNTIME.detail.id));
+  if (!content) return "";
+  return `<div class="admin-detail-layer"><button class="admin-detail-backdrop" type="button" data-admin-close-detail aria-label="??ng panel chi ti?t"></button><aside class="admin-detail-drawer">${content}</aside></div>`;
+}
+
+function renderManagementShell(root) {
+  if (!root || !MANAGEMENT_RUNTIME.auth || !MANAGEMENT_RUNTIME.data) return;
+  root.innerHTML = normalizeAdminCopy(renderManagementApp(MANAGEMENT_RUNTIME.auth, MANAGEMENT_RUNTIME.data, MANAGEMENT_RUNTIME.currentPage));
+  const detailMarkup = renderManagementDetailContent();
+  if (detailMarkup) root.insertAdjacentHTML("beforeend", normalizeAdminCopy(detailMarkup));
+  bindSearch(root);
+}
+
+function renderDashboardPage(auth, data, stats) {
+  const topTours = getTopTours(data.bookings, data.tours);
+  const transactionBacklog = stats.pendingPayments.length + data.refunds.filter((refund) => refund.status === "pending").length;
+  const supportBacklog = stats.pendingReviews.length + stats.unresolvedTickets.length;
+  const bookingSeries = buildRecentDaySeries(data.bookings, (booking) => booking.created_at);
+  const bookingTotal = bookingSeries.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const revenueSeries = buildRecentDaySeries(
+    data.payments.filter((payment) => payment.status === "paid"),
+    (payment) => payment.paid_at || payment.requested_at || payment.created_at,
+    (payment) => Number(payment.amount || 0)
+  );
+  const revenueTotal = revenueSeries.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const cards = [
+    { icon: "group", chip: `${stats.totalUsers}`, label: "NgÆ°á»i dÃ¹ng", value: String(stats.totalUsers), hint: "Tá»ng há» sÆ¡ hiá»n cÃ³", cardTone: "blue" },
+    { icon: "assignment", chip: `${stats.pendingBookings.length}`, chipTone: "warning", label: "Booking chá» xá»­ lÃ½", value: String(stats.pendingBookings.length), hint: "Chá» xá»­ lÃ½, thanh toÃ¡n vÃ  há»§y tour", cardTone: "orange" },
+    { icon: "payments", chip: `${transactionBacklog}`, chipTone: transactionBacklog ? "info" : "success", label: "Giao dá»ch cáº§n xem", value: String(transactionBacklog), hint: "HÃ ng Äá»£i thanh toÃ¡n vÃ  refund pending", cardTone: "green" },
+    { icon: "support_agent", chip: `${supportBacklog}`, chipTone: supportBacklog ? "danger" : "success", label: "Há» trá»£ & review", value: String(supportBacklog), hint: "Ticket má» vÃ  review backlog", cardTone: "red" }
+  ];
+
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">${cards.map(renderStatCard).join("")}</section>
+    <section class="admin-section-grid admin-section-grid-dashboard">
+      ${renderChartPanel({
+        title: "Booking má»i (7 ngÃ y gáº§n nháº¥t)",
+        description: "Äáº¿m sá» booking táº¡o má»i má»i ngÃ y tá»« DB.",
+        totalLabel: "Tá»ng booking",
+        totalValue: String(bookingTotal),
+        series: bookingSeries,
+        tone: "blue",
+        emptyTitle: "ChÆ°a cÃ³ booking má»i",
+        emptyDescription: "Booking má»i trong 7 ngÃ y gáº§n nháº¥t sáº½ hiá»n á» ÄÃ¢y."
+      })}
+      ${renderChartPanel({
+        title: "Doanh thu thu vá» (7 ngÃ y gáº§n nháº¥t)",
+        description: "Chá» tÃ­nh payment ÄÃ£ thÃ nh cÃ´ng.",
+        totalLabel: "Tá»ng ÄÃ£ thu",
+        totalValue: formatCurrency(revenueTotal, "VND"),
+        series: revenueSeries,
+        tone: "green",
+        emptyTitle: "ChÆ°a cÃ³ giao dá»ch thÃ nh cÃ´ng",
+        emptyDescription: "Doanh thu tá»« payment.status = paid sáº½ hiá»n á» ÄÃ¢y."
+      })}
+    </section>
+    ${renderQuickAccessGrid(buildQuickAccessItems(auth, data, stats))}
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><div><h2>Booking má»i nhat</h2><p>Don dat tour moi nhat tu he thong.</p></div></div><div class="admin-list-stack">${renderBookingCards(data.bookings)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><div><h2>Hang doi ho tro</h2><p>Ticket mo va review can xu ly ngay.</p></div></div><div class="admin-list-stack">${stats.unresolvedTickets.length ? renderTicketList(stats.unresolvedTickets) : renderReviewList(stats.pendingReviews)}</div></article>
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><div><h2>Tour ná»i báº­t</h2><p>Xep hang theo booking thuc te.</p></div></div><div class="admin-tour-list">${renderTopTourList(topTours)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><div><h2>Hoat dong gan day</h2><p>Nhat ky moi nhat tu activity_logs.</p></div></div>${renderActivityList(data.activityLogs)}</article>
+    </section>
+  `;
+}
+
+function renderReportsPage(data, stats) {
+  const revenueBars = groupMonthlyRevenue(data.payments);
+  const regions = getRegionBreakdown(data.bookings);
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "payments", chip: `+${stats.totalBookings}`, label: "Doanh thu ÄÃ£ thu", value: formatCurrency(stats.collectedRevenue, "VND"), hint: "payment.status = paid" })}
+      ${renderStatCard({ icon: "receipt_long", chip: `${stats.pendingPayments.length}`, chipTone: "info", label: "Thanh to?n chá» xá»­ lÃ½", value: String(stats.pendingPayments.length), hint: "Chá» xá»­ lÃ½ and unpaid flow" })}
+      ${renderStatCard({ icon: "restart_alt", chip: `${data.refunds.length}`, chipTone: "danger", label: "Tong hoan tien", value: formatCurrency(stats.refundAmount, "VND"), hint: "Tá»« public.refunds" })}
+      ${renderStatCard({ icon: "confirmation_number", chip: `${stats.activeCoupons.length}`, chipTone: "info", label: "LÆ°á»£t dÃ¹ng coupon", value: String(stats.totalCouponUsage), hint: "Tá»« coupon_usages" })}
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel admin-chart-panel"><div class="portal-section-head"><div><h2>Biá»u Äá» doanh thu</h2><p>6 thÃ¡ng gáº§n nháº¥t tá»« payment records.</p></div><button class="admin-pill-button" type="button">Theo thÃ¡ng</button></div><div class="admin-bar-chart">${revenueBars.map((bar) => `<div class="admin-bar-col"><div class="admin-bar-fill ${bar.label === revenueBars[revenueBars.length - 1]?.label ? "is-active" : ""}" style="height:${bar.height}%"></div><span>${escapeHtml(bar.label)}</span></div>`).join("")}</div></article>
+      <article class="admin-panel admin-region-panel"><h2>C? c?u booking theo v?ng</h2><div class="admin-region-list">${regions.map((region, index) => `<div class="admin-region-item"><div class="admin-region-top"><div><i class="admin-region-dot admin-region-dot-${index + 1}"></i><span>${escapeHtml(region.label)}</span></div><strong>${escapeHtml(String(region.percent || 0))}%</strong></div><div class="admin-region-track"><span class="admin-region-progress admin-region-progress-${index + 1}" style="width:${Math.max(region.percent, 8)}%"></span></div></div>`).join("")}</div></article>
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>PhÆ°Æ¡ng thá»©c thanh toÃ¡n</h2><p>CÃ¡c phÆ°Æ¡ng thá»©c Äang báº­t.</p></div>${renderPaymentMethods(data.paymentMethods)}</article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>Nháº­t kÃ½ hoáº¡t Äá»ng</h2><p>Hoáº¡t Äá»ng má»i nháº¥t tá»« activity_logs.</p></div>${renderActivityList(data.activityLogs)}</article>
+    </section>
+  `;
+}
+
+function renderBookingsPage(data, stats) {
+  const filteredBookings = getFilteredBookings(data);
+  const controls = [
+    renderToolbarField("bookings", "bookingStatus", "Booking status", [
+      { value: "all", label: "T?t c? booking" },
+      { value: "pending", label: "Pending" },
+      { value: "awaiting_payment", label: "Awaiting payment" },
+      { value: "confirmed", label: "Confirmed" },
+      { value: "cancel_requested", label: "Chá» duyá»t há»§y" },
+      { value: "cancelled", label: "Cancelled" }
+    ]),
+    renderToolbarField("bookings", "paymentStatus", "Payment status", [
+      { value: "all", label: "T?t c? payment" },
+      { value: "pending", label: "Pending" },
+      { value: "unpaid", label: "Unpaid" },
+      { value: "paid", label: "Paid" },
+      { value: "refunded", label: "Refunded" }
+    ]),
+    renderToolbarField("bookings", "cancellation", "Cancellation", [
+      { value: "all", label: "T?t c? cancellation" },
+      { value: "requested", label: "?ang ch? duy?t" },
+      { value: "resolved", label: "?? x? l?" }
+    ])
+  ];
+  const rows = filteredBookings.map((booking) => {
+    const tone = getBookingTone(booking);
+    return `<tr data-search="${escapeHtml(`${booking.booking_code} ${booking.contact_name || ""} ${booking.tour?.name || booking.snapshot_jsonb?.tour_name || ""}`)}"><td><strong class="admin-order-code">#${escapeHtml(booking.booking_code)}</strong></td><td><div class="admin-customer-cell"><div class="admin-customer-avatar">${escapeHtml(getInitials(booking.contact_name || "KH"))}</div><div><strong>${escapeHtml(booking.contact_name || "KhÃ¡ch hÃ ng")}</strong><span>${escapeHtml(booking.contact_email || "")}</span></div></div></td><td><div class="admin-tour-cell"><strong>${escapeHtml(booking.tour?.name || booking.snapshot_jsonb?.tour_name || "Tour")}</strong><span>${escapeHtml(formatShortDate(booking.snapshot_jsonb?.departure_date || booking.created_at))}</span></div></td><td>${escapeHtml(formatCurrency(booking.total_amount, booking.currency || "VND"))}</td><td>${renderStatusTag(tone.label, tone.tone)}</td><td>${escapeHtml(formatStatus(booking.payment_status || "pending"))}</td><td><div class="admin-table-actions"><button class="admin-inline-button" type="button" data-admin-open-detail="booking" data-admin-detail-id="${escapeHtml(booking.id)}">Chi ti?t</button>${booking.booking_status === "cancel_requested" ? `<button class="admin-inline-button is-primary" type="button" data-admin-action="approve-cancellation" data-booking-code="${escapeHtml(booking.booking_code)}">Duyá»t há»§y</button>` : ""}</div></td></tr>`;
+  });
+  const invoiceRows = data.invoices.slice(0, 6).map((invoice) => `<article class="admin-mini-row" data-search="${escapeHtml(`${invoice.invoice_number} ${invoice.company_name || ""}`)}"><div><strong>${escapeHtml(invoice.invoice_number)}</strong><p>${escapeHtml(invoice.company_name || "Kh?ch l?")} - ${escapeHtml(invoice.booking?.booking_code || "N/A")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatDateTime(invoice.issued_at))}</span></div></article>`).join("");
+  const cancellationQueue = data.bookings.filter((booking) => booking.booking_status === "cancel_requested");
+  return `
+    ${renderOpsToolbar("Booking operations", "L?c booking th?t, m? detail drawer v? export CSV nh? cho v?n h?nh.", controls, `<button class="admin-inline-button" type="button" data-admin-export="bookings">Export CSV</button>`)}
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "assignment", chip: `${stats.totalBookings}`, label: "Tá»ng booking", value: String(stats.totalBookings), hint: "Tá»« public.bookings" })}
+      ${renderStatCard({ icon: "hourglass_top", chip: `${stats.pendingBookings.length}`, chipTone: "warning", label: "HÃ ng Äá»£i xá»­ lÃ½", value: String(stats.pendingBookings.length), hint: "pending, awaiting_payment, cancel_requested" })}
+      ${renderStatCard({ icon: "task_alt", chip: `${data.bookings.filter((booking) => booking.booking_status === "completed").length}`, label: "HoÃ n táº¥t", value: String(data.bookings.filter((booking) => booking.booking_status === "completed").length), hint: "booking_status = completed" })}
+      ${renderStatCard({ icon: "sell", chip: `${data.invoices.length}`, chipTone: "info", label: "HÃ³a ÄÆ¡n ÄÃ£ xuáº¥t", value: String(data.invoices.length), hint: "Tá»« public.invoices" })}
+    </section>
+    ${renderTablePanel("Danh sÃ¡ch booking", "Route nÃ y Äá»c trá»±c tiáº¿p booking tháº­t tá»« DB.", ["Code", "KhÃ¡ch hÃ ng", "Tour", "Amount", "Status", "Payment", "Actions"], rows, `Hiá»n thá» ${rows.length} booking`) }
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>HÃ ng Äá»£i há»§y booking</h2><p>Duyá»t hoáº·c tá»« chá»i yÃªu cáº§u há»§y tá»« khÃ¡ch.</p></div><div class="admin-list-stack">${renderCancellationQueue(cancellationQueue)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>HÃ³a ÄÆ¡n gáº§n ÄÃ¢y</h2><p>HÃ³a ÄÆ¡n liÃªn káº¿t trá»±c tiáº¿p vá»i booking.</p></div><div class="admin-list-stack">${invoiceRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ hÃ³a ÄÆ¡n</h3><p>HÃ³a ÄÆ¡n sáº½ hiá»n á» ÄÃ¢y khi DB cÃ³ dá»¯ liá»u.</p></div>'}</div></article>
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>Hoáº¡t Äá»ng booking</h2><p>Timeline tá»« booking events vÃ  activity logs.</p></div>${renderActivityList(data.activityLogs.filter((item) => item.entity_type === "booking" || item.entity_type === "support_ticket"))}</article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>Chá» thanh toÃ¡n</h2><p>H?ng ??i x?c nh?n thanh to?n tay ho?c th? l?i giao dá»ch.</p></div><div class="admin-list-stack">${renderPendingPaymentQueue(data.bookings)}</div></article>
+    </section>
+  `;
+}
+function renderPaymentsPage(data, stats) {
+  const filteredPayments = getFilteredPayments(data);
+  const providerOptions = [{ value: "all", label: "T?t c? provider" }].concat(Array.from(new Set((data.payments || []).map((payment) => String(payment.provider_name || payment.paymentMethod?.name || "manual").toLowerCase()))).sort().map((provider) => ({ value: provider, label: provider })));
+  const controls = [
+    renderToolbarField("payments", "status", "Payment status", [
+      { value: "all", label: "T?t c? status" },
+      { value: "pending", label: "Pending" },
+      { value: "paid", label: "Paid" },
+      { value: "failed", label: "Failed" },
+      { value: "expired", label: "Expired" },
+      { value: "refunded", label: "Refunded" }
+    ]),
+    renderToolbarField("payments", "refundStatus", "Refund state", [
+      { value: "all", label: "T?t c? refund" },
+      { value: "none", label: "Ch?a c? refund" },
+      { value: "pending", label: "Refund pending" },
+      { value: "refunded", label: "Refunded" },
+      { value: "rejected", label: "Refund rejected" }
+    ]),
+    renderToolbarField("payments", "provider", "Provider", providerOptions)
+  ];
+  const rows = filteredPayments.map((payment) => {
+    const tone = getPaymentTone(payment);
+    const reconciliation = getPaymentReconciliation(payment);
+    return `<tr data-search="${escapeHtml(`${payment.transaction_code || ""} ${payment.provider_name || ""} ${payment.booking?.booking_code || ""}`)}"><td><strong class="admin-order-code">${escapeHtml(payment.transaction_code || payment.provider_payment_id || payment.id.slice(0, 8))}</strong></td><td>${escapeHtml(payment.booking?.booking_code || "N/A")}</td><td>${escapeHtml(payment.provider_name || "Th? c?ng")}</td><td>${escapeHtml(formatCurrency(payment.amount, payment.currency || "VND"))}</td><td>${renderStatusTag(tone.label, tone.tone)}</td><td>${renderStatusTag(reconciliation.label, reconciliation.tone)}</td><td><div class="admin-table-actions"><button class="admin-inline-button" type="button" data-admin-open-detail="payment" data-admin-detail-id="${escapeHtml(payment.id)}">Chi ti?t</button></div></td></tr>`;
+  });
+  const refundRows = data.refunds.map((refund) => `<article class="admin-mini-row" data-search="${escapeHtml(`${refund.reason || ""} ${refund.payment?.booking?.booking_code || ""}`)}"><div><strong>${escapeHtml(refund.payment?.booking?.booking_code || "Ho?n ti?n")}</strong><p>${escapeHtml(refund.reason || "Ch?a c? l? do")} - ${escapeHtml(refund.status || "pending")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatCurrency(refund.amount, refund.payment?.currency || "VND"))}</span><em>${escapeHtml(formatDateTime(refund.refunded_at || refund.created_at))}</em></div></article>`).join("");
+  return `
+    ${renderOpsToolbar("Payment operations", "??i so?t payment v?i booking th?t, review refund status v? export CSV cho finance ops.", controls, `<button class="admin-inline-button" type="button" data-admin-export="payments">Export CSV</button>`)}
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "payments", chip: `${stats.pendingPayments.length}`, chipTone: "info", label: "Giao dá»ch chá» xá»­ lÃ½", value: String(stats.pendingPayments.length), hint: "Luá»ng pending vÃ  unpaid" })}
+      ${renderStatCard({ icon: "credit_score", chip: `${data.paymentMethods.length}`, label: "PhÆ°Æ¡ng thá»©c thanh toÃ¡n", value: String(data.paymentMethods.length), hint: "PhÆ°Æ¡ng thá»©c Äang báº­t" })}
+      ${renderStatCard({ icon: "savings", chip: `${data.refunds.length}`, chipTone: "danger", label: "T?ng ho?n ti?n", value: formatCurrency(stats.refundAmount, "VND"), hint: "Tá»« public.refunds" })}
+      ${renderStatCard({ icon: "inventory", chip: `${data.invoices.length}`, label: "HÃ³a ÄÆ¡n li?n k?t", value: String(data.invoices.length), hint: "Issued invoice records" })}
+    </section>
+    ${renderTablePanel("Danh s?ch giao dá»ch", "B?n ghi giao dá»ch ??c t? b?ng payments.", ["Transaction", "Booking", "Provider", "Amount", "Status", "??i so?t", "Actions"], rows, `Hiá»n thá» ${rows.length} giao dá»ch`) }
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>HÃ ng Äá»£i thanh toÃ¡n</h2><p>Xá»­ lÃ½ thanh toÃ¡n tay vÃ  retry tá»« booking tháº­t.</p></div><div class="admin-list-stack">${renderPendingPaymentQueue(data.bookings)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>HÃ ng Äá»£i hoÃ n tiá»n</h2><p>Xá»­ lÃ½ hoáº·c tá»« chá»i cÃ¡c refund Äang pending.</p></div><div class="admin-list-stack">${renderRefundQueue(data.refunds)}</div></article>
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>HoÃ n tiá»n gáº§n ÄÃ¢y</h2><p>B?n ghi ho?n ti?n li?n k?t ng??c v?i booking.</p></div><div class="admin-list-stack">${refundRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ dá»¯ liá»u ho?n ti?n</h3><p>Refund sáº½ hiá»n á» ÄÃ¢y khi DB cÃ³ dá»¯ liá»u.</p></div>'}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>PhÆ°Æ¡ng thá»©c Äang báº­t</h2><p>CÃ¡c phÆ°Æ¡ng thá»©c thanh toÃ¡n Äang má» cho luá»ng Äáº·t tour.</p></div>${renderPaymentMethods(data.paymentMethods)}</article>
+    </section>
+  `;
+}
+
+function renderToursPage(data, stats) {
+  const topTours = getTopTours(data.bookings, data.tours);
+  const rows = data.schedules.slice(0, 12).map((schedule) => `<tr data-search="${escapeHtml(`${schedule.tourName} ${schedule.destinationLabel || ""}`)}"><td><strong>${escapeHtml(schedule.tourName)}</strong></td><td>${escapeHtml(schedule.destinationLabel || "Äang cáº­p nháº­t")}</td><td>${escapeHtml(formatShortDate(schedule.departureDate))}</td><td>${escapeHtml(String(schedule.capacity || 0))}</td><td>${escapeHtml(String(schedule.availableSlots || 0))}</td><td>${renderStatusTag(formatStatus(schedule.status), schedule.status === "sold_out" ? "danger" : schedule.status === "open" ? "success" : "waiting")}</td></tr>`);
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "explore", chip: `${data.tours.length}`, label: "Tour Äang hiá»n thá»", value: String(data.tours.length), hint: "From public.tours" })}
+      ${renderStatCard({ icon: "calendar_month", chip: `${stats.activeSchedules.length}`, chipTone: "info", label: "Lá»ch Äang má»", value: String(stats.activeSchedules.length), hint: "draft, open, sold_out" })}
+      ${renderStatCard({ icon: "event_busy", chip: `${stats.soldOutSchedules.length}`, chipTone: "danger", label: "Háº¿t chá»", value: String(stats.soldOutSchedules.length), hint: "schedule.status = sold_out" })}
+      ${renderStatCard({ icon: "star", chip: `${topTours.length}`, label: "Top tour", value: topTours[0]?.name || "KhÃ´ng cÃ³ booking data", hint: "Xáº¿p háº¡ng theo sá» lÆ°á»£ng booking" })}
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>Tour ná»i báº­t</h2><p>Sáº¯p xáº¿p theo booking tháº­t.</p></div><div class="admin-tour-list">${renderTopTourList(topTours)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>Danh má»¥c</h2><p>Tag danh má»¥c hiá»n cÃ³ trong catalog tour.</p></div><div class="admin-chip-list">${data.tours.flatMap((tour) => tour.categories || []).slice(0, 12).map((category) => `<span class="admin-soft-pill">${escapeHtml(category.name)}</span>`).join("")}</div></article>
+    </section>
+    ${renderTablePanel("Lá»ch khá»i hÃ nh", "Lá»ch khá»i hÃ nh sáº¯p tá»i Äá»c tá»« departure_schedules.", ["Tour", "Destination", "Departure", "Capacity", "Available", "Status"], rows, `Hiá»n thá» ${rows.length} l?ch`) }
+  `;
+}
+
+function renderServicePage(data, stats) {
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "support_agent", chip: `${stats.unresolvedTickets.length}`, chipTone: "danger", label: "Ticket Äang má»", value: String(stats.unresolvedTickets.length), hint: "open and in_progress" })}
+      ${renderStatCard({ icon: "rate_review", chip: `${stats.pendingReviews.length}`, chipTone: "warning", label: "Review chá» duyá»t", value: String(stats.pendingReviews.length), hint: "review.status != approved" })}
+      ${renderStatCard({ icon: "mark_email_read", chip: `${data.tickets.filter((ticket) => ticket.status === "resolved").length}`, label: "Ticket ÄÃ£ xá»­ lÃ½", value: String(data.tickets.filter((ticket) => ticket.status === "resolved").length), hint: "status = resolved" })}
+      ${renderStatCard({ icon: "star", chip: `${data.reviews.length}`, label: "Tá»ng review", value: String(data.reviews.length), hint: "approved plus pending" })}
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>Ticket há» trá»£</h2><p>Danh sÃ¡ch ticket tá»« public.support_tickets.</p></div><div class="admin-list-stack">${renderTicketList(data.tickets)}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>Kiá»m duyá»t review</h2><p>Danh sÃ¡ch review tá»« public.reviews vÃ  review_replies.</p></div><div class="admin-list-stack">${renderReviewList(stats.pendingReviews.length ? stats.pendingReviews : data.reviews)}</div></article>
+    </section>
+  `;
+}
+
+function renderCustomersPage(data, stats) {
+  const customers = getFilteredCustomers(data);
+  const averageSpend = customers.length ? Math.round(customers.reduce((sum, customer) => sum + customer.spend, 0) / customers.length) : 0;
+  const controls = [
+    renderToolbarField("customers", "segment", "Segment", [
+      { value: "all", label: "T?t c? kh?ch" },
+      { value: "repeat", label: "KhÃ¡ch quay láº¡i" },
+      { value: "support", label: "C? ticket h? tr?" },
+      { value: "vip", label: "VIP / chi ti?u cao" }
+    ])
+  ];
+  const customerRows = customers.slice(0, 12).map((customer) => `<article class="admin-customer-row" data-search="${escapeHtml(`${customer.name} ${customer.email}`)}"><div class="admin-customer-avatar">${escapeHtml(getInitials(customer.name))}</div><div class="admin-customer-row-copy"><strong>${escapeHtml(customer.name)}</strong><p>${escapeHtml(customer.email || "ChÆ°a cÃ³ email")}</p></div><div class="admin-customer-row-side"><span>${escapeHtml(String(customer.bookingCount))} booking</span><em>${escapeHtml(formatCurrency(customer.spend, "VND"))}</em></div><div class="admin-row-action"><button class="admin-inline-button" type="button" data-admin-open-detail="customer" data-admin-detail-id="${escapeHtml(customer.key)}">Xem l?ch s?</button></div></article>`).join("");
+  const customerProfiles = customers.slice(0, 12).map((customer) => `<article class="admin-profile-row" data-search="${escapeHtml(`${customer.name} ${customer.email}`)}"><div class="admin-customer-avatar">${escapeHtml(getInitials(customer.name))}</div><div class="admin-customer-row-copy"><strong>${escapeHtml(customer.name)}</strong><p>${escapeHtml(customer.email || "ChÆ°a cÃ³ email")}</p></div><div class="admin-profile-role">${escapeHtml(customer.customerLevel || (customer.bookingCount > 1 ? "Repeat" : "New"))}</div><button class="admin-inline-button" type="button" data-admin-open-detail="customer" data-admin-detail-id="${escapeHtml(customer.key)}">Chi ti?t</button></article>`).join("");
+  return `
+    ${renderOpsToolbar("Customer operations", "M? l?ch s? booking, review, ticket v? t?ng chi ti?u c?a kh?ch ngay trong admin.", controls)}
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "groups_2", chip: `${stats.customerCount}`, label: "KhÃ¡ch hÃ ng", value: String(stats.customerCount), hint: "role = customer" })}
+      ${renderStatCard({ icon: "repeat", chip: `${stats.repeatCustomers}`, chipTone: "info", label: "KhÃ¡ch quay láº¡i", value: String(stats.repeatCustomers), hint: "Tá»« hai booking trá» lÃªn" })}
+      ${renderStatCard({ icon: "shopping_bag", chip: `${stats.totalBookings}`, label: "Booking ?ang theo d?i", value: String(stats.totalBookings), hint: "ToÃ n bá» ÄÆ¡n hiá»n táº¡i" })}
+      ${renderStatCard({ icon: "savings", chip: `${customers.length}`, chipTone: "info", label: "Chi ti?u TB", value: formatCurrency(averageSpend, "VND"), hint: "Computed from filtered customers" })}
+    </section>
+    <section class="admin-section-grid">
+      <article class="admin-panel"><div class="portal-section-head"><h2>KhÃ¡ch gáº§n ÄÃ¢y</h2><p>Tá»ng há»£p tá»« booking vÃ  thÃ´ng tin liÃªn há».</p></div><div class="admin-list-stack">${customerRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ khÃ¡ch hÃ ng</h3><p>D? li?u kh?ch h?ng s? hi?n khi c? booking ho?c profile customer.</p></div>'}</div></article>
+      <article class="admin-panel"><div class="portal-section-head"><h2>Há» sÆ¡ khÃ¡ch</h2><p>??c t? profiles v? user_roles, n?i c?ng booking history.</p></div><div class="admin-list-stack">${customerProfiles || '<div class="empty-state"><h3>ChÆ°a cÃ³ há» sÆ¡ kh?ch</h3><p>KhÃ¡ch hÃ ng s? hi?n ? ??y khi DB c? profile ho?c booking.</p></div>'}</div></article>
+    </section>
+  `;
+}
+
+function renderPromotionsPage(data, stats) {
+  const rows = data.coupons.map((coupon) => `<tr data-search="${escapeHtml(`${coupon.code} ${coupon.name || ""}`)}"><td><strong>${escapeHtml(coupon.code)}</strong></td><td>${escapeHtml(coupon.name || coupon.code)}</td><td>${escapeHtml(coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue, "VND"))}</td><td>${escapeHtml(formatCurrency(coupon.minOrderAmount || 0, "VND"))}</td><td>${renderStatusTag(coupon.isActive ? "Active" : "Off", coupon.isActive ? "success" : "danger")}</td><td>${escapeHtml(String(coupon.usageCount || 0))}</td></tr>`);
+  const usageRows = data.couponUsages.slice(0, 8).map((usage) => `<article class="admin-mini-row" data-search="${escapeHtml(`${usage.booking?.booking_code || ""} ${usage.customer?.full_name || ""}`)}"><div><strong>${escapeHtml(usage.booking?.booking_code || "LÆ°á»£t dÃ¹ng")}</strong><p>${escapeHtml(usage.customer?.full_name || "KhÃ¡ch hÃ ng")} - ${escapeHtml(formatDateTime(usage.created_at))}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(formatCurrency(usage.discount_amount, "VND"))}</span><em>${escapeHtml(usage.booking?.snapshot_jsonb?.tour_name || usage.booking?.tour?.name || "Tour")}</em></div></article>`).join("");
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "sell", chip: `${stats.activeCoupons.length}`, label: "Coupon Äang báº­t", value: String(stats.activeCoupons.length), hint: "Äá»c tá»« public.coupons" })}
+      ${renderStatCard({ icon: "confirmation_number", chip: `${stats.totalCouponUsage}`, chipTone: "info", label: "LÆ°á»£t dÃ¹ng", value: String(stats.totalCouponUsage), hint: "Tá»« coupon_usages" })}
+      ${renderStatCard({ icon: "local_offer", chip: `${data.coupons.length}`, label: "Tá»ng giáº£m ÄÃ£ Ã¡p dá»¥ng", value: formatCurrency(data.coupons.reduce((sum, coupon) => sum + Number(coupon.totalDiscount || 0), 0), "VND"), hint: "Total real discount amount" })}
+      ${renderStatCard({ icon: "payments", chip: `${data.coupons.length}`, label: "Top coupon value", value: formatCurrency(Math.max(0, ...data.coupons.map((coupon) => Number(coupon.maxDiscountAmount || coupon.discountValue || 0))), "VND"), hint: "Current highest discount cap" })}
+    </section>
+    ${renderTablePanel("Danh sÃ¡ch coupon", "Coupon Äang hoáº¡t Äá»ng vÃ  lÆ°á»£t sá»­ dá»¥ng tá»« DB tháº­t.", ["Code", "Name", "Discount", "Min order", "Status", "LÆ°á»£t dÃ¹ng"], rows, `Hiá»n thá» ${rows.length} coupon`) }
+    <section class="admin-section-grid"><article class="admin-panel"><div class="portal-section-head"><h2>LÆ°á»£t dÃ¹ng coupon</h2><p>Booking nÃ o ÄÃ£ dÃ¹ng coupon vÃ  giáº£m bao nhiÃªu.</p></div><div class="admin-list-stack">${usageRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ lÆ°á»£t dÃ¹ng coupon</h3><p>LÆ°á»£t dÃ¹ng coupon sáº½ hiá»n á» ÄÃ¢y sau khi Ã¡p dá»¥ng.</p></div>'}</div></article><article class="admin-panel"><div class="portal-section-head"><h2>PhÆ°Æ¡ng thá»©c thanh toÃ¡n liÃªn quan</h2><p>Há» trá»£ staff Äá»i soÃ¡t coupon vá»i payment.</p></div>${renderPaymentMethods(data.paymentMethods)}</article></section>
+  `;
+}
+
+function renderUsersPage(data, stats) {
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "group", chip: `${stats.totalUsers}`, label: "Tá»ng ngÆ°á»i dÃ¹ng", value: String(stats.totalUsers), hint: "Tá»« profiles" })}
+      ${renderStatCard({ icon: "badge", chip: `${stats.roleCounts.staff || 0}`, chipTone: "info", label: "Staff", value: String(stats.roleCounts.staff || 0), hint: "role = staff" })}
+      ${renderStatCard({ icon: "security", chip: `${(stats.roleCounts.admin || 0) + (stats.roleCounts.super_admin || 0)}`, chipTone: "info", label: "Quáº£n trá»", value: String((stats.roleCounts.admin || 0) + (stats.roleCounts.super_admin || 0)), hint: "admin plus super_admin" })}
+      ${renderStatCard({ icon: "person", chip: `${stats.customerCount}`, label: "KhÃ¡ch hÃ ng", value: String(stats.customerCount), hint: "role = customer" })}
+    </section>
+    <section class="admin-section-grid"><article class="admin-panel"><div class="portal-section-head"><h2>PhÃ¢n bá» vai trÃ²</h2><p>Tá»ng há»£p tá»« roles vÃ  user_roles hiá»n táº¡i.</p></div><div class="admin-role-grid">${renderRoleCards(stats.roleCounts)}</div></article><article class="admin-panel"><div class="portal-section-head"><h2>Há» sÆ¡ má»i nháº¥t</h2><p>CÃ¡c profile má»i nháº¥t hiá»n cÃ³ trong há» thá»ng.</p></div><div class="admin-list-stack">${renderProfileRows(data.profiles)}</div></article></section>
+  `;
+}
+
+function renderContentPage(data, stats) {
+  const bannerRows = data.banners.slice(0, 8).map((banner) => `<tr data-search="${escapeHtml(`${banner.title} ${banner.placement || ""}`)}"><td><strong>${escapeHtml(banner.title)}</strong></td><td>${escapeHtml(banner.placement || "home")}</td><td>${renderStatusTag(Boolean(banner.is_active ?? banner.isActive) ? "Active" : "Off", Boolean(banner.is_active ?? banner.isActive) ? "success" : "danger")}</td><td>${escapeHtml(String(banner.sort_order ?? 0))}</td><td>${escapeHtml(formatShortDate(banner.start_at || banner.created_at))}</td></tr>`);
+  const cmsRows = data.cmsPages.slice(0, 8).map((page) => `<article class="admin-mini-row" data-search="${escapeHtml(`${page.slug} ${page.title}`)}"><div><strong>${escapeHtml(page.title)}</strong><p>${escapeHtml(page.slug)}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(page.metaTitle || page.title)}</span><em>${escapeHtml(page.publishedAt ? formatShortDate(page.publishedAt) : "Active")}</em></div></article>`).join("");
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "campaign", chip: `${stats.activeBanners.length}`, label: "Active banners", value: String(stats.activeBanners.length), hint: "public.banners" })}
+      ${renderStatCard({ icon: "description", chip: `${data.cmsPages.length}`, chipTone: "info", label: "Trang CMS", value: String(data.cmsPages.length), hint: "public.cms_pages" })}
+      ${renderStatCard({ icon: "visibility", chip: `${stats.publishedPages.length}`, label: "Trang cÃ´ng khai", value: String(stats.publishedPages.length || data.cmsPages.length), hint: "Trang Äang hiá»n trÃªn website" })}
+      ${renderStatCard({ icon: "palette", chip: `${data.banners.length}`, chipTone: "info", label: "Vá» trÃ­ hiá»n thá»", value: String(new Set(data.banners.map((banner) => banner.placement || "home")).size), hint: "hero, home, listing" })}
+    </section>
+    ${renderTablePanel("Danh sÃ¡ch banner", "Banner Äá»c trá»±c tiáº¿p tá»« báº£ng banners.", ["Banner", "Placement", "Status", "Sort", "Start"], bannerRows, `Hiá»n thá» ${data.banners.slice(0, 8).length} banner`) }
+    <section class="admin-section-grid"><article class="admin-panel"><div class="portal-section-head"><h2>Trang CMS</h2><p>CÃ¡c trang ná»i dung Äang ÄÆ°á»£c dÃ¹ng trÃªn website.</p></div><div class="admin-list-stack">${cmsRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ trang CMS</h3><p>Trang CMS sáº½ hiá»n á» ÄÃ¢y khi DB cÃ³ dá»¯ liá»u.</p></div>'}</div></article><article class="admin-panel"><div class="portal-section-head"><h2>Tá»ng quan ná»i dung</h2><p>Xem nhanh banner, coupon vÃ  CMS.</p></div><div class="admin-content-grid"><article class="admin-content-card"><span>Banner Äang báº­t</span><strong>${escapeHtml(String(stats.activeBanners.length))}</strong><p>Vá» trÃ­ Äang ÄÆ°á»£c báº­t trÃªn website.</p></article><article class="admin-content-card"><span>Coupon Äang báº­t</span><strong>${escapeHtml(String(stats.activeCoupons.length))}</strong><p>MÃ£ giáº£m giÃ¡ Äang kháº£ dá»¥ng.</p></article><article class="admin-content-card"><span>Trang CMS</span><strong>${escapeHtml(String(data.cmsPages.length))}</strong><p>CÃ¡c trang ná»i dung Äang ÄÆ°á»£c quáº£n lÃ½.</p></article><article class="admin-content-card"><span>Nguá»n dá»¯ liá»u</span><strong>DB</strong><p>Dá»¯ liá»u admin Äang Äá»c trá»±c tiáº¿p tá»« Supabase.</p></article></div></article></section>
+  `;
+}
+
+function renderSettingsPage(data, stats) {
+  const settingRows = data.systemSettings.map((setting) => `<article class="admin-mini-row" data-search="${escapeHtml(setting.setting_key)}"><div><strong>${escapeHtml(setting.setting_key)}</strong><p>${escapeHtml(setting.description || "Cáº¥u hÃ¬nh há» thá»ng")}</p></div><div class="admin-mini-row-side"><span>${escapeHtml(typeof setting.setting_value === "string" ? setting.setting_value : JSON.stringify(setting.setting_value))}</span></div></article>`).join("");
+  return `
+    <section class="admin-stats-grid admin-stats-grid-analytics">
+      ${renderStatCard({ icon: "settings", chip: `${data.systemSettings.length}`, label: "Cáº¥u hÃ¬nh há» thá»ng", value: String(data.systemSettings.length), hint: "Doc tu public.system_settings" })}
+      ${renderStatCard({ icon: "payments", chip: `${data.paymentMethods.length}`, chipTone: "info", label: "PhÆ°Æ¡ng thá»©c thanh toÃ¡n", value: String(data.paymentMethods.length), hint: "Gateway va phuong thuc tay hien tai" })}
+      ${renderStatCard({ icon: "admin_panel_settings", chip: `${Object.keys(stats.roleCounts).length}`, label: "MÃ´ hÃ¬nh vai trÃ²", value: "4", hint: "customer, staff, admin, super_admin" })}
+      ${renderStatCard({ icon: "database", chip: "DB", chipTone: "info", label: "Nguá»n dá»¯ liá»u", value: "Supabase", hint: "Äá»c trá»±c tiáº¿p tá»« DB" })}
+    </section>
+    <section class="admin-section-grid"><article class="admin-panel"><div class="portal-section-head"><h2>Snapshot key/value há» thá»ng</h2><p>GiÃ¡ trá» hiá»n táº¡i tá»« public.system_settings.</p></div><div class="admin-list-stack">${settingRows || '<div class="empty-state"><h3>ChÆ°a cÃ³ cáº¥u hÃ¬nh</h3><p>CÃ i Äáº·t há» thá»ng sáº½ hiá»n á» ÄÃ¢y khi DB sáºµn sÃ ng.</p></div>'}</div></article><article class="admin-panel"><div class="portal-section-head"><h2>PhÆ°Æ¡ng thá»©c thanh toÃ¡n vÃ  mÃ´ hÃ¬nh vai trÃ²</h2><p>Cáº¥u hÃ¬nh váº­n hÃ nh nhanh cho admin.</p></div>${renderPaymentMethods(data.paymentMethods)}<div class="admin-settings-grid"><article class="admin-setting-card"><span>KhÃ¡ch hÃ ng</span><strong>${escapeHtml(String(stats.roleCounts.customer || 0))}</strong><p>NgÆ°á»i dÃ¹ng cuá»i vÃ  hÃ nh khÃ¡ch.</p></article><article class="admin-setting-card"><span>Staff</span><strong>${escapeHtml(String(stats.roleCounts.staff || 0))}</strong><p>Váº­n hÃ nh, há» trá»£, booking vÃ  payment.</p></article><article class="admin-setting-card"><span>Admin</span><strong>${escapeHtml(String(stats.roleCounts.admin || 0))}</strong><p>Quáº£n lÃ½ ná»i dung vÃ  há» thá»ng.</p></article><article class="admin-setting-card"><span>Super admin</span><strong>${escapeHtml(String(stats.roleCounts.super_admin || 0))}</strong><p>ToÃ n quyá»n cáº¥u hÃ¬nh.</p></article></div></article></section>
+  `;
+}
+
+function renderPageBody(auth, currentPage, data, stats) {
+  const renderers = {
+    dashboard: () => renderDashboardPage(auth, data, stats),
+    reports: () => renderReportsPage(data, stats),
+    bookings: () => renderBookingsPage(data, stats),
+    payments: () => renderPaymentsPage(data, stats),
+    tours: () => renderToursPage(data, stats),
+    service: () => renderServicePage(data, stats),
+    customers: () => renderCustomersPage(data, stats),
+    promotions: () => renderPromotionsPage(data, stats),
+    users: () => renderUsersPage(data, stats),
+    content: () => renderContentPage(data, stats),
+    settings: () => renderSettingsPage(data, stats)
+  };
+  return (renderers[currentPage] || renderers.dashboard)();
+}
+
+function renderManagementApp(auth, data, currentPage) {
+  const stats = { ...getManagementStats(data), sourceMode: data.sourceMode };
+  const mobileOrder = ["dashboard", "bookings", "payments", "service", "settings"];
+  const mobilePages = mobileOrder.filter((pageKey) => canAccessPage(auth.primaryRole, pageKey)).slice(0, 4);
+  return `
+    ${renderSidebar(auth, currentPage, stats)}
+    <main class="portal-main admin-portal-main">
+      ${renderTopbar(auth, currentPage, data.sourceMode)}
+      <div class="portal-content admin-portal-content">
+        ${renderPageIntro(auth, currentPage, data, stats)}
+        ${renderPageBody(auth, currentPage, data, stats)}
+      </div>
+    </main>
+    <nav class="portal-mobile-nav admin-mobile-nav">${mobilePages.map((pageKey) => `<a class="${pageKey === currentPage ? "is-active" : ""}" href="${routePath(PAGE_DEFINITIONS[pageKey].routeKey)}"><span class="material-symbols-outlined">${PAGE_DEFINITIONS[pageKey].icon}</span><span>${escapeHtml(PAGE_DEFINITIONS[pageKey].label)}</span></a>`).join("")}</nav>
+  `;
+}
+
+function bindSearch(root) {
+  const input = qs("#admin-dashboard-search", root);
+  const items = Array.from(root.querySelectorAll("[data-search]"));
+  if (!input) return;
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLowerCase();
+    items.forEach((item) => {
+      const haystack = String(item.dataset.search || "").toLowerCase();
+      item.style.display = !query || haystack.includes(query) ? "" : "none";
+    });
+  });
+}
+
+async function renderManagementRoot(root, auth, currentPage) {
+  MANAGEMENT_RUNTIME.auth = auth;
+  MANAGEMENT_RUNTIME.currentPage = currentPage;
+  MANAGEMENT_RUNTIME.data = await getAdminDashboard();
+  renderManagementShell(root);
+}
+
+async function handleManagementAction(button, root, auth, currentPage) {
+  const action = button.dataset.adminAction;
+  if (!action) return;
+
+  const promptMap = {
+    "approve-cancellation": {
+      message: "Ghi ch? khi duy?t h?y booking:",
+      value: "ÄÃ£ duyá»t y?u c?u h?y theo quy ??nh hi?n h?nh."
+    },
+    "reject-cancellation": {
+      message: "L? do t? ch?i y?u c?u h?y:",
+      value: "Booking hi?n ch?a ?? ?i?u ki?n h?y theo ch?nh s?ch."
+    },
+    "record-manual-payment": {
+      message: "Ghi ch? x?c nh?n thanh to?n th? c?ng:",
+      value: "B? ph?n v?n h?nh ÄÃ£ xÃ¡c nháº­n thanh to?n ngo?i tuy?n."
+    },
+    "process-refund": {
+      message: "Ghi ch? ho?n ti?n:",
+      value: "Refund ?? ???c x? l? v? ghi nh?n tr?n h? th?ng."
+    },
+    "reject-refund": {
+      message: "L? do t? ch?i refund:",
+      value: "Refund request ch?a ?? ?i?u ki?n x? l?."
+    },
+    "approve-review": {
+      message: "Pháº£n há»i g?i k?m khi duy?t review (c? th? ?? tr?ng):",
+      value: button.dataset.reviewReply || "C?m ?n b?n ?? chia s? tr?i nghi?m th?c t?."
+    },
+    "hide-review": {
+      message: "Pháº£n há»i g?i t?i kh?ch khi ?n review (c? th? ?? tr?ng):",
+      value: button.dataset.reviewReply || ""
+    },
+    "reply-review": {
+      message: "Nh?p ph?n h?i cho review n?y:",
+      value: button.dataset.reviewReply || "C?m ?n b?n ?? ch?n TourBook."
+    },
+    "add-booking-note": {
+      message: "Ghi ch? n?i b? cho booking:",
+      value: ""
+    }
+  };
+
+  const promptConfig = promptMap[action] || null;
+  const note = promptConfig ? window.prompt(normalizeAdminText(promptConfig.message), normalizeAdminText(promptConfig.value)) : "";
+  if (promptConfig && note === null) return;
+
+  button.disabled = true;
+  try {
+    switch (action) {
+      case "approve-cancellation":
+        await reviewCancellation({ bookingCode: button.dataset.bookingCode, decision: "approved", note });
+        showToast("Ðã duy?t yêu c?u h?y booking.", "success");
+        break;
+      case "reject-cancellation":
+        await reviewCancellation({ bookingCode: button.dataset.bookingCode, decision: "rejected", note });
+        showToast("Ðã t? ch?i yêu c?u h?y booking.", "success");
+        break;
+      case "record-manual-payment":
+        await recordManualPayment({ bookingCode: button.dataset.bookingCode, note });
+        showToast("Ðã ghi nh?n thanh toán th? công.", "success");
+        break;
+      case "process-refund":
+        await processRefund({ refundId: button.dataset.refundId, decision: "refunded", note });
+        showToast("Ðã hoàn ti?n thành công.", "success");
+        break;
+      case "reject-refund":
+        await processRefund({ refundId: button.dataset.refundId, decision: "rejected", note });
+        showToast("Ðã t? ch?i refund.", "success");
+        break;
+      case "approve-review":
+        await moderateReview({ reviewId: button.dataset.reviewId, status: "approved", replyText: note });
+        showToast("Ðã duy?t review.", "success");
+        break;
+      case "hide-review":
+        await moderateReview({ reviewId: button.dataset.reviewId, status: "hidden", replyText: note });
+        showToast("Ðã ?n review kh?i public pages.", "success");
+        break;
+      case "reply-review":
+        if (!String(note || "").trim()) {
+          showToast("Pháº£n há»i review kh?ng ???c ?? tr?ng.", "error");
+          return;
+        }
+        await moderateReview({ reviewId: button.dataset.reviewId, status: button.dataset.reviewStatus || "pending", replyText: note });
+        showToast("?? l?u ph?n h?i review.", "success");
+        break;
+      case "add-booking-note":
+        if (!String(note || "").trim()) {
+          showToast("Ghi ch? n?i b? kh?ng ???c ?? tr?ng.", "error");
+          return;
+        }
+        await updateBookingInternalNote({ bookingCode: button.dataset.bookingCode, bookingId: button.dataset.bookingId, note });
+        showToast("?? l?u ghi ch? n?i b?.", "success");
+        break;
+      default:
+        return;
+    }
+
+    await renderManagementRoot(root, auth, currentPage);
+  } catch (error) {
+    showToast(normalizeAdminText(error.message || "Lá»i quáº£n trá» khÃ´ng mong muá»n."), "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function init() {
+  const root = qs("#admin-app");
+  document.title = normalizeAdminText(document.title);
+  setLoading(root, normalizeAdminText("Äang táº£i khu quáº£n trá»..."));
+  const auth = await guardPage({ management: true });
+  if (!auth) return;
+
+  const currentPage = getCurrentPageKey();
+  if (!canAccessPage(auth.primaryRole, currentPage)) {
+    const fallbackPage = getAccessiblePages(auth.primaryRole)[0] || "dashboard";
+    window.location.href = routePath(PAGE_DEFINITIONS[fallbackPage].routeKey);
+    return;
+  }
+
+  root.addEventListener("change", (event) => {
+    const filterControl = event.target.closest("[data-admin-filter]");
+    if (!filterControl) return;
+    const pageKey = filterControl.dataset.adminFilterPage || currentPage;
+    getRuntimeFilters(pageKey)[filterControl.dataset.adminFilter] = filterControl.value;
+    renderManagementShell(root);
+  });
+
+  root.addEventListener("click", async (event) => {
+    const logoutButton = event.target.closest("#admin-logout");
+    if (logoutButton) {
+      await signOut();
+      showToast("ÄÃ£ ÄÄng xuáº¥t khá»i khu quáº£n trá».", "success");
+      window.location.href = routePath("home");
+      return;
+    }
+
+    const closeDetailButton = event.target.closest("[data-admin-close-detail]");
+    if (closeDetailButton) {
+      MANAGEMENT_RUNTIME.detail = null;
+      renderManagementShell(root);
+      return;
+    }
+
+    const exportButton = event.target.closest("[data-admin-export]");
+    if (exportButton) {
+      exportAdminCsv(exportButton.dataset.adminExport);
+      return;
+    }
+
+    const detailButton = event.target.closest("[data-admin-open-detail]");
+    if (detailButton) {
+      MANAGEMENT_RUNTIME.detail = {
+        type: detailButton.dataset.adminOpenDetail,
+        id: detailButton.dataset.adminDetailId
+      };
+      renderManagementShell(root);
+      return;
+    }
+
+    const actionButton = event.target.closest("[data-admin-action]");
+    if (actionButton) {
+      event.preventDefault();
+      await handleManagementAction(actionButton, root, auth, currentPage);
+    }
+  });
+
+  try {
+    await renderManagementRoot(root, auth, currentPage);
+  } catch (error) {
+    root.innerHTML = normalizeAdminCopy(`<div class="empty-state"><h3>Kh?ng th? t?i khu qu?n tr?</h3><p>${escapeHtml(error.message || "L?i kh?ng mong mu?n.")}</p></div>`);
+  }
+}
+
+void init();
+
+
+
+
+
+
+
+
+
+
+
+
+
